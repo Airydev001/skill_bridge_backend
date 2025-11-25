@@ -21,4 +21,6 @@ router.use(authMiddleware_1.protect);
 router.use(admin);
 router.get('/stats', adminController_1.getAdminStats);
 router.get('/users', adminController_1.getAllUsers);
+router.get('/reports', adminController_1.getReports);
+router.patch('/reports/:id', adminController_1.updateReportStatus);
 exports.default = router;

@@ -17,6 +17,7 @@ const express_async_handler_1 = __importDefault(require("express-async-handler")
 const User_1 = __importDefault(require("../models/User"));
 const generateToken_1 = __importDefault(require("../utils/generateToken"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const emailService_1 = require("../services/emailService");
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
 // @access  Public
@@ -79,12 +80,17 @@ exports.forgotPassword = (0, express_async_handler_1.default)((req, res) => __aw
         res.status(404);
         throw new Error('User not found');
     }
-    // Generate reset token (mock for now, in real app send email)
+    // Generate reset token
     const resetToken = (0, generateToken_1.default)(user._id.toString());
-    // In a real app, you would save a hashed version of this token to the user document
-    // and send an email with a link like: http://localhost:5173/reset-password?token=${resetToken}
-    console.log(`Reset token for ${email}: ${resetToken}`);
-    res.json({ message: 'Password reset email sent (check console for token)', token: resetToken });
+    // Send email
+    try {
+        yield (0, emailService_1.sendPasswordResetEmail)(user, resetToken);
+        res.json({ message: 'Password reset email sent' });
+    }
+    catch (error) {
+        res.status(500);
+        throw new Error('Email could not be sent');
+    }
 }));
 // @desc    Reset password
 // @route   POST /api/auth/reset-password

@@ -8,4 +8,5 @@ const mentorController_1 = require("../controllers/mentorController");
 const router = express_1.default.Router();
 router.get('/', mentorController_1.getMentors);
 router.get('/:id', mentorController_1.getMentorById);
+router.get('/:id/slots', mentorController_1.getMentorSlots);
 exports.default = router;

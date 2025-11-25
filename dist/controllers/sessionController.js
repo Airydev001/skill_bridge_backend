@@ -16,6 +16,9 @@ exports.getSessionById = exports.updateSession = exports.getSessions = exports.c
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const Session_1 = __importDefault(require("../models/Session"));
 const uuid_1 = require("uuid");
+const emailService_1 = require("../services/emailService");
+const gamificationService_1 = require("../services/gamificationService");
+const User_1 = __importDefault(require("../models/User"));
 // @desc    Create new session
 // @route   POST /api/sessions
 // @access  Private
@@ -31,6 +34,13 @@ exports.createSession = (0, express_async_handler_1.default)((req, res) => __awa
         agenda,
         webrtcRoomId: (0, uuid_1.v4)()
     });
+    // Send Email Notification
+    const mentee = req.user;
+    const mentor = yield User_1.default.findById(mentorId);
+    if (mentee)
+        yield (0, emailService_1.sendSessionReminder)(session, mentee);
+    if (mentor)
+        yield (0, emailService_1.sendSessionReminder)(session, mentor);
     res.status(201).json(session);
 }));
 // @desc    Get user sessions
@@ -57,10 +67,16 @@ exports.updateSession = (0, express_async_handler_1.default)((req, res) => __awa
         res.status(401);
         throw new Error('Not authorized');
     }
+    const oldStatus = session.status;
     session.status = req.body.status || session.status;
     session.rating = req.body.rating || session.rating;
     session.notes = req.body.notes || session.notes;
     yield session.save();
+    // Check for gamification if session completed
+    if (oldStatus !== 'completed' && session.status === 'completed') {
+        yield (0, gamificationService_1.checkAndAwardBadges)(session.mentorId.toString());
+        yield (0, gamificationService_1.checkAndAwardBadges)(session.menteeId.toString());
+    }
     res.json(session);
 }));
 // @desc    Get session by ID

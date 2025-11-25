@@ -55,7 +55,12 @@ const userSchema = new mongoose_1.Schema({
     avatarUrl: { type: String },
     isVerified: { type: Boolean, default: false },
     lastLogin: { type: Date },
-    profile: { type: mongoose_1.Schema.Types.ObjectId, refPath: 'role' }
+    profile: { type: mongoose_1.Schema.Types.ObjectId, refPath: 'role' },
+    badges: [{ type: String }],
+    streak: {
+        count: { type: Number, default: 0 },
+        lastSessionDate: { type: Date }
+    }
 }, {
     timestamps: true
 });

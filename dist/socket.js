@@ -25,6 +25,9 @@ const initSocket = (httpServer) => {
         socket.on('ice-candidate', (incoming) => {
             io.to(incoming.target).emit('ice-candidate', incoming.candidate);
         });
+        socket.on('send-message', ({ roomId, message, senderId, senderName }) => {
+            io.to(roomId).emit('receive-message', { message, senderId, senderName, timestamp: new Date() });
+        });
         socket.on('disconnect', () => {
             console.log('User disconnected:', socket.id);
         });
