@@ -23,7 +23,17 @@ const transporter = nodemailer_1.default.createTransport({
         pass: process.env.SMTP_PASS,
     },
 });
+// Verify connection configuration
+transporter.verify(function (error, success) {
+    if (error) {
+        console.error('SMTP Connection Error:', error);
+    }
+    else {
+        console.log('SMTP Server is ready to take our messages');
+    }
+});
 const sendEmail = (to, subject, html) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(`Attempting to send email to: ${to} with subject: ${subject}`);
     try {
         const info = yield transporter.sendMail({
             from: '"SkillBridge" <no-reply@skillbridge.com>',

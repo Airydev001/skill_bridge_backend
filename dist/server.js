@@ -32,6 +32,14 @@ app.use('/api/users', userRoutes_1.default);
 app.use('/api/mentors', mentorRoutes_1.default);
 app.use('/api/sessions', sessionRoutes_1.default);
 app.use('/api/admin', adminRoutes_1.default);
+// Serve frontend static files
+const path_1 = __importDefault(require("path"));
+const frontendPath = path_1.default.join(__dirname, '../../frontend/dist');
+app.use(express_1.default.static(frontendPath));
+// Handle SPA routing - return index.html for any unknown route
+app.get('*', (req, res) => {
+    res.sendFile(path_1.default.join(frontendPath, 'index.html'));
+});
 app.use(errorMiddleware_1.errorHandler);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

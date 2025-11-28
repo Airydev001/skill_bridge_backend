@@ -62,8 +62,10 @@ exports.getSessions = (0, express_async_handler_1.default)((req, res) => __await
     const sessions = yield Session_1.default.find({
         $or: [{ mentorId: req.user._id }, { menteeId: req.user._id }]
     }).populate('mentorId', 'name avatarUrl').populate('menteeId', 'name avatarUrl');
+    console.log(`[getSessions] Found ${sessions.length} total sessions for user ${req.user._id}`);
     // Filter out sessions with missing data
     const validSessions = sessions.filter(session => session.mentorId && session.menteeId);
+    console.log(`[getSessions] Returning ${validSessions.length} valid sessions after filtering`);
     res.json(validSessions);
 }));
 // @desc    Update session status

@@ -13,6 +13,7 @@ const initSocket = (httpServer) => {
         console.log('User connected:', socket.id);
         socket.on('join-room', (roomId, userId) => {
             socket.join(roomId);
+            socket.join(userId);
             socket.to(roomId).emit('user-connected', userId);
             console.log(`User ${userId} joined room ${roomId}`);
         });
