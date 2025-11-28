@@ -36,7 +36,6 @@ export const sendSessionReminder = async (session: any, user: any) => {
         <a href="http://localhost:5173/session/${session.webrtcRoomId}">Join Session</a>
     `;
     await sendEmail(user.email, subject, html);
-    await sendEmail(user.email, subject, html);
 };
 
 export const sendPasswordResetEmail = async (user: any, token: string) => {

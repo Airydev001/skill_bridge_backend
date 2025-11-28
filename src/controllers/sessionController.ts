@@ -29,8 +29,8 @@ export const createSession = asyncHandler(async (req: Request, res: Response) =>
     const mentee = req.user;
     const mentor = await User.findById(mentorId);
 
-    if (mentee) await sendSessionReminder(session, mentee);
-    if (mentor) await sendSessionReminder(session, mentor);
+    if (mentee) sendSessionReminder(session, mentee).catch(err => console.error('Error sending mentee reminder:', err));
+    if (mentor) sendSessionReminder(session, mentor).catch(err => console.error('Error sending mentor reminder:', err));
 
     res.status(201).json(session);
 });
