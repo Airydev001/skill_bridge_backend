@@ -46,7 +46,9 @@ export const createSession = asyncHandler(async (req: Request, res: Response) =>
     };
 
     // Trigger background email sending
-    sendEmails();
+    setImmediate(() => {
+        sendEmails();
+    });
 });
 
 // @desc    Get user sessions

@@ -41,7 +41,13 @@ app.use(express.static(frontendPath));
 
 // Handle SPA routing - return index.html for any unknown route
 app.get('*all', (req, res) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    console.log(`Serving index.html for ${req.path} from ${frontendPath}`);
+    res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
+        if (err) {
+            console.error("Error sending index.html:", err);
+            res.status(500).send("Error loading application.");
+        }
+    });
 });
 
 app.use(errorHandler);

@@ -53,7 +53,9 @@ exports.createSession = (0, express_async_handler_1.default)((req, res) => __awa
         }
     });
     // Trigger background email sending
-    sendEmails();
+    setImmediate(() => {
+        sendEmails();
+    });
 }));
 // @desc    Get user sessions
 // @route   GET /api/sessions

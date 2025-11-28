@@ -56,14 +56,15 @@ const sendSessionReminder = (session, user) => __awaiter(void 0, void 0, void 0,
         <p>You have a session scheduled for <strong>${new Date(session.startAt).toLocaleString()}</strong>.</p>
         <p>Topic: ${session.agenda}</p>
         <br/>
-        <a href="http://localhost:5173/session/${session.webrtcRoomId}">Join Session</a>
+        <a href="${process.env.APP_URL || 'https://skill-bridge-backend-current.onrender.com'}/session/${session.webrtcRoomId}">Join Session</a>
     `;
     yield (0, exports.sendEmail)(user.email, subject, html);
 });
 exports.sendSessionReminder = sendSessionReminder;
 const sendPasswordResetEmail = (user, token) => __awaiter(void 0, void 0, void 0, function* () {
     const subject = 'Password Reset Request';
-    const resetUrl = `http://localhost:5173/reset-password?token=${token}`;
+    const appUrl = process.env.APP_URL || 'https://skill-bridge-backend-current.onrender.com';
+    const resetUrl = `${appUrl}/reset-password?token=${token}`;
     const html = `
         <h1>Password Reset</h1>
         <p>Hi ${user.name},</p>

@@ -43,14 +43,15 @@ export const sendSessionReminder = async (session: any, user: any) => {
         <p>You have a session scheduled for <strong>${new Date(session.startAt).toLocaleString()}</strong>.</p>
         <p>Topic: ${session.agenda}</p>
         <br/>
-        <a href="http://localhost:5173/session/${session.webrtcRoomId}">Join Session</a>
+        <a href="${process.env.APP_URL || 'https://skill-bridge-backend-current.onrender.com'}/session/${session.webrtcRoomId}">Join Session</a>
     `;
     await sendEmail(user.email, subject, html);
 };
 
 export const sendPasswordResetEmail = async (user: any, token: string) => {
     const subject = 'Password Reset Request';
-    const resetUrl = `http://localhost:5173/reset-password?token=${token}`;
+    const appUrl = process.env.APP_URL || 'https://skill-bridge-backend-current.onrender.com';
+    const resetUrl = `${appUrl}/reset-password?token=${token}`;
     const html = `
         <h1>Password Reset</h1>
         <p>Hi ${user.name},</p>
