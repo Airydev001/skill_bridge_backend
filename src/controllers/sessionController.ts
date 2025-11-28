@@ -25,14 +25,28 @@ export const createSession = asyncHandler(async (req: Request, res: Response) =>
         webrtcRoomId: uuidv4()
     });
 
-    // Send Email Notification
-    const mentee = req.user;
-    const mentor = await User.findById(mentorId);
-
-    if (mentee) sendSessionReminder(session, mentee).catch(err => console.error('Error sending mentee reminder:', err));
-    if (mentor) sendSessionReminder(session, mentor).catch(err => console.error('Error sending mentor reminder:', err));
-
+    // Send response immediately to avoid blocking on email service
     res.status(201).json(session);
+
+    // Send Email Notification asynchronously
+    const sendEmails = async () => {
+        try {
+            const mentee = req.user;
+            const mentor = await User.findById(mentorId);
+
+            if (mentee) {
+                await sendSessionReminder(session, mentee).catch(err => console.error('Error sending mentee reminder:', err));
+            }
+            if (mentor) {
+                await sendSessionReminder(session, mentor).catch(err => console.error('Error sending mentor reminder:', err));
+            }
+        } catch (error) {
+            console.error('Error in background email process:', error);
+        }
+    };
+
+    // Trigger background email sending
+    sendEmails();
 });
 
 // @desc    Get user sessions
