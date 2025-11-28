@@ -11,7 +11,17 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+// Verify connection configuration
+transporter.verify(function (error, success) {
+    if (error) {
+        console.error('SMTP Connection Error:', error);
+    } else {
+        console.log('SMTP Server is ready to take our messages');
+    }
+});
+
 export const sendEmail = async (to: string, subject: string, html: string) => {
+    console.log(`Attempting to send email to: ${to} with subject: ${subject}`);
     try {
         const info = await transporter.sendMail({
             from: '"SkillBridge" <no-reply@skillbridge.com>',

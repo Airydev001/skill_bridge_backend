@@ -34,6 +34,16 @@ app.use('/api/mentors', mentorRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Serve frontend static files
+import path from 'path';
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendPath));
+
+// Handle SPA routing - return index.html for any unknown route
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
