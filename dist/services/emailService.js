@@ -49,7 +49,6 @@ const sendSessionReminder = (session, user) => __awaiter(void 0, void 0, void 0,
         <a href="http://localhost:5173/session/${session.webrtcRoomId}">Join Session</a>
     `;
     yield (0, exports.sendEmail)(user.email, subject, html);
-    yield (0, exports.sendEmail)(user.email, subject, html);
 });
 exports.sendSessionReminder = sendSessionReminder;
 const sendPasswordResetEmail = (user, token) => __awaiter(void 0, void 0, void 0, function* () {

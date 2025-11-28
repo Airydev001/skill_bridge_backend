@@ -34,14 +34,26 @@ exports.createSession = (0, express_async_handler_1.default)((req, res) => __awa
         agenda,
         webrtcRoomId: (0, uuid_1.v4)()
     });
-    // Send Email Notification
-    const mentee = req.user;
-    const mentor = yield User_1.default.findById(mentorId);
-    if (mentee)
-        yield (0, emailService_1.sendSessionReminder)(session, mentee);
-    if (mentor)
-        yield (0, emailService_1.sendSessionReminder)(session, mentor);
+    // Send response immediately to avoid blocking on email service
     res.status(201).json(session);
+    // Send Email Notification asynchronously
+    const sendEmails = () => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const mentee = req.user;
+            const mentor = yield User_1.default.findById(mentorId);
+            if (mentee) {
+                yield (0, emailService_1.sendSessionReminder)(session, mentee).catch(err => console.error('Error sending mentee reminder:', err));
+            }
+            if (mentor) {
+                yield (0, emailService_1.sendSessionReminder)(session, mentor).catch(err => console.error('Error sending mentor reminder:', err));
+            }
+        }
+        catch (error) {
+            console.error('Error in background email process:', error);
+        }
+    });
+    // Trigger background email sending
+    sendEmails();
 }));
 // @desc    Get user sessions
 // @route   GET /api/sessions

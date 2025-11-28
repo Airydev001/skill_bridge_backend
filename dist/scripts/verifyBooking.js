@@ -12,14 +12,42 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = __importDefault(require("axios"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const API_URL = 'http://localhost:4000/api';
+const API_URL = 'http://127.0.0.1:4000/api';
 const runVerification = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
     try {
         console.log('Starting Booking Verification...');
+        // Helper for fetch
+        const post = (url, data, token) => __awaiter(void 0, void 0, void 0, function* () {
+            const headers = { 'Content-Type': 'application/json' };
+            if (token)
+                headers['Authorization'] = `Bearer ${token}`;
+            const res = yield fetch(`${API_URL}${url}`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) {
+                const text = yield res.text();
+                throw new Error(`POST ${url} failed: ${res.status} ${text}`);
+            }
+            return res.json();
+        });
+        const get = (url, token) => __awaiter(void 0, void 0, void 0, function* () {
+            const headers = { 'Content-Type': 'application/json' };
+            if (token)
+                headers['Authorization'] = `Bearer ${token}`;
+            const res = yield fetch(`${API_URL}${url}`, {
+                method: 'GET',
+                headers
+            });
+            if (!res.ok) {
+                const text = yield res.text();
+                throw new Error(`GET ${url} failed: ${res.status} ${text}`);
+            }
+            return res.json();
+        });
         // 1. Register/Login Mentee
         const menteeEmail = `testmentee_${Date.now()}@example.com`;
         const password = 'password123';
@@ -27,70 +55,51 @@ const runVerification = () => __awaiter(void 0, void 0, void 0, function* () {
         let token;
         let menteeId;
         try {
-            const registerRes = yield axios_1.default.post(`${API_URL}/auth/register`, {
+            const data = yield post('/auth/register', {
                 name: 'Test Mentee',
                 email: menteeEmail,
                 password,
                 role: 'mentee'
             });
-            token = registerRes.data.token;
-            menteeId = registerRes.data._id;
+            token = data.token;
+            menteeId = data._id;
             console.log('   Mentee registered:', menteeId);
         }
         catch (e) {
-            console.error('   Registration failed:', ((_a = e.response) === null || _a === void 0 ? void 0 : _a.data) || e.message);
+            console.error('   Registration failed:', e);
             process.exit(1);
         }
         // 2. Find a Mentor
         console.log('2. Finding a Mentor...');
         let mentorId;
         try {
-            const mentorsRes = yield axios_1.default.get(`${API_URL}/mentors`);
-            if (mentorsRes.data.length === 0) {
+            const mentors = yield get('/mentors');
+            if (mentors.length === 0) {
                 console.error('   No mentors found. Please seed the database.');
                 process.exit(1);
             }
-            mentorId = mentorsRes.data[0].userId._id; // Assuming structure
-            // If the first one doesn't have a profile, we might need to look deeper, 
-            // but getMentors returns MentorProfiles populated with userId.
-            // Wait, getMentors returns MentorProfile documents.
-            // So mentorsRes.data[0]._id is the MentorProfile ID.
-            // But createSession expects `mentorId` to be the User ID of the mentor?
-            // Let's check sessionController.ts:
-            // const { mentorId, startAt, agenda } = req.body;
-            // const session = await Session.create({ mentorId, ... });
-            // Session model: mentorId: { type: Schema.Types.ObjectId, ref: 'User', required: true }
-            // So we need the User ID of the mentor.
-            // getMentors returns: MentorProfile.find().populate('userId', 'name avatarUrl')
-            // So mentorsRes.data[0].userId is an object {_id, name, avatarUrl}
-            mentorId = mentorsRes.data[0].userId._id;
+            // mentors[0] is MentorProfile. userId is populated.
+            mentorId = mentors[0].userId._id;
             console.log('   Mentor found:', mentorId);
         }
         catch (e) {
-            console.error('   Failed to fetch mentors:', ((_b = e.response) === null || _b === void 0 ? void 0 : _b.data) || e.message);
+            console.error('   Failed to fetch mentors:', e);
             process.exit(1);
         }
         // 3. Get Available Slots
         console.log('3. Getting Available Slots...');
         let slotToBook;
         try {
-            const today = new Date().toISOString().split('T')[0];
-            // We need to find a day that matches the mentor's availability.
-            // The seed script adds availability for Mon-Fri.
-            // Let's just try "today". If it's weekend, this might fail to find slots.
-            // For verification, let's force a known available day if today is empty?
-            // Or just try the next 7 days until we find slots.
+            // Find mentor profile ID
+            const mentors = yield get('/mentors');
+            const mentorProfileId = mentors[0]._id;
             for (let i = 0; i < 7; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() + i);
                 const dateStr = d.toISOString().split('T')[0];
-                // We need the MentorProfile ID for the route /api/mentors/:id/slots
-                // The route expects the MentorProfile ID, not User ID.
-                // Let's get the MentorProfile ID from step 2.
-                const mentorProfileId = (yield axios_1.default.get(`${API_URL}/mentors`)).data[0]._id;
-                const slotsRes = yield axios_1.default.get(`${API_URL}/mentors/${mentorProfileId}/slots?date=${dateStr}`);
-                if (slotsRes.data.length > 0) {
-                    slotToBook = slotsRes.data[0];
+                const slots = yield get(`/mentors/${mentorProfileId}/slots?date=${dateStr}`);
+                if (slots.length > 0) {
+                    slotToBook = slots[0];
                     console.log(`   Found slot on ${dateStr}:`, slotToBook);
                     break;
                 }
@@ -101,27 +110,25 @@ const runVerification = () => __awaiter(void 0, void 0, void 0, function* () {
             }
         }
         catch (e) {
-            console.error('   Failed to fetch slots:', ((_c = e.response) === null || _c === void 0 ? void 0 : _c.data) || e.message);
+            console.error('   Failed to fetch slots:', e);
             process.exit(1);
         }
         // 4. Book Session
         console.log('4. Booking Session...');
         try {
-            const bookingRes = yield axios_1.default.post(`${API_URL}/sessions`, {
-                mentorId: mentorId, // User ID
+            const booking = yield post('/sessions', {
+                mentorId: mentorId,
                 startAt: slotToBook,
                 agenda: 'Verification Test Session'
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            console.log('   Session booked successfully:', bookingRes.data._id);
-            console.log('   Status:', bookingRes.data.status);
-            if (bookingRes.data.status !== 'scheduled') {
+            }, token);
+            console.log('   Session booked successfully:', booking._id);
+            console.log('   Status:', booking.status);
+            if (booking.status !== 'scheduled') {
                 throw new Error('Session status is not scheduled');
             }
         }
         catch (e) {
-            console.error('   Booking failed:', ((_d = e.response) === null || _d === void 0 ? void 0 : _d.data) || e.message);
+            console.error('   Booking failed:', e);
             process.exit(1);
         }
         console.log('VERIFICATION SUCCESSFUL: Booking flow is working.');
