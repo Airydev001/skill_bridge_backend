@@ -37,7 +37,7 @@ const path_1 = __importDefault(require("path"));
 const frontendPath = path_1.default.join(__dirname, '../../frontend/dist');
 app.use(express_1.default.static(frontendPath));
 // Handle SPA routing - return index.html for any unknown route
-app.get('*', (req, res) => {
+app.get('*all', (req, res) => {
     res.sendFile(path_1.default.join(frontendPath, 'index.html'));
 });
 app.use(errorMiddleware_1.errorHandler);
