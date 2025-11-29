@@ -3,6 +3,7 @@ import asyncHandler from 'express-async-handler';
 import User from '../models/User';
 import MentorProfile from '../models/MentorProfile';
 import MenteeProfile from '../models/MenteeProfile';
+import generateToken from '../utils/generateToken';
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -101,4 +102,61 @@ export const updateMenteeProfile = asyncHandler(async (req: Request, res: Respon
     }
 
     res.json(profile);
+});
+// @desc    Update user profile (unified)
+// @route   PUT /api/users/profile
+// @access  Private
+export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        user.name = req.body.name || user.name;
+        user.avatarUrl = req.body.avatarUrl || user.avatarUrl;
+
+        if (req.body.password) {
+            user.passwordHash = req.body.password;
+        }
+
+        const updatedUser = await user.save();
+
+        // Update specific profile if data provided
+        let profileData = null;
+        if (user.role === 'mentor') {
+            const { bio, skills, yearsExperience, languages, availability } = req.body;
+            let profile = await MentorProfile.findOne({ userId: user._id });
+            if (profile) {
+                if (bio) profile.bio = bio;
+                if (skills) profile.skills = skills;
+                if (yearsExperience) profile.yearsExperience = yearsExperience;
+                if (languages) profile.languages = languages;
+                if (availability) profile.availability = availability;
+                await profile.save();
+                profileData = profile;
+            }
+        } else if (user.role === 'mentee') {
+            const { interests, skillLevel, learningGoals, preferredTimes } = req.body;
+            let profile = await MenteeProfile.findOne({ userId: user._id });
+            if (profile) {
+                if (interests) profile.interests = interests;
+                if (skillLevel) profile.skillLevel = skillLevel;
+                if (learningGoals) profile.learningGoals = learningGoals;
+                if (preferredTimes) profile.preferredTimes = preferredTimes;
+                await profile.save();
+                profileData = profile;
+            }
+        }
+
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            avatarUrl: updatedUser.avatarUrl,
+            token: generateToken(updatedUser._id.toString()),
+            profile: profileData
+        });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
 });

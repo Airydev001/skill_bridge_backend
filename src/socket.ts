@@ -1,6 +1,8 @@
 import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
 
+import Message from './models/Message';
+
 export const initSocket = (httpServer: HttpServer) => {
     const io = new Server(httpServer, {
         cors: {
@@ -12,11 +14,19 @@ export const initSocket = (httpServer: HttpServer) => {
     io.on('connection', (socket) => {
         console.log('User connected:', socket.id);
 
-        socket.on('join-room', (roomId, userId) => {
+        socket.on('join-room', async (roomId, userId) => {
             socket.join(roomId);
             socket.join(userId);
             socket.to(roomId).emit('user-connected', userId);
             console.log(`User ${userId} joined room ${roomId}`);
+
+            // Load chat history
+            try {
+                const messages = await Message.find({ roomId }).sort({ timestamp: 1 }).limit(50);
+                socket.emit('chat-history', messages);
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
         });
 
         socket.on('offer', (payload) => {
@@ -31,8 +41,17 @@ export const initSocket = (httpServer: HttpServer) => {
             io.to(incoming.target).emit('ice-candidate', incoming.candidate);
         });
 
-        socket.on('send-message', ({ roomId, message, senderId, senderName }) => {
-            io.to(roomId).emit('receive-message', { message, senderId, senderName, timestamp: new Date() });
+        socket.on('send-message', async ({ roomId, message, senderId, senderName }) => {
+            const msgData = { message, senderId, senderName, timestamp: new Date() };
+
+            // Save to DB
+            try {
+                await Message.create({ roomId, senderId, senderName, message });
+            } catch (error) {
+                console.error('Error saving message:', error);
+            }
+
+            io.to(roomId).emit('receive-message', msgData);
         });
 
         socket.on('disconnect', () => {
