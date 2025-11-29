@@ -1,7 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
-
 import Message from './models/Message';
+import Whiteboard from './models/Whiteboard';
 
 export const initSocket = (httpServer: HttpServer) => {
     const io = new Server(httpServer, {
@@ -26,6 +26,17 @@ export const initSocket = (httpServer: HttpServer) => {
                 socket.emit('chat-history', messages);
             } catch (error) {
                 console.error('Error loading chat history:', error);
+            }
+
+            // Load whiteboard state
+            try {
+                let whiteboard = await Whiteboard.findOne({ roomId });
+                if (!whiteboard) {
+                    whiteboard = await Whiteboard.create({ roomId, strokes: [] });
+                }
+                socket.emit('whiteboard-state', whiteboard.strokes);
+            } catch (error) {
+                console.error('Error loading whiteboard:', error);
             }
         });
 
@@ -52,6 +63,34 @@ export const initSocket = (httpServer: HttpServer) => {
             }
 
             io.to(roomId).emit('receive-message', msgData);
+        });
+
+        // Whiteboard Events
+        socket.on('draw-stroke', async ({ roomId, stroke }) => {
+            socket.to(roomId).emit('draw-stroke', stroke);
+
+            try {
+                await Whiteboard.findOneAndUpdate(
+                    { roomId },
+                    { $push: { strokes: stroke } },
+                    { upsert: true }
+                );
+            } catch (error) {
+                console.error('Error saving stroke:', error);
+            }
+        });
+
+        socket.on('clear-board', async ({ roomId }) => {
+            io.to(roomId).emit('clear-board');
+
+            try {
+                await Whiteboard.findOneAndUpdate(
+                    { roomId },
+                    { $set: { strokes: [] } }
+                );
+            } catch (error) {
+                console.error('Error clearing whiteboard:', error);
+            }
         });
 
         socket.on('disconnect', () => {
