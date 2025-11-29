@@ -8,6 +8,7 @@ const userController_1 = require("../controllers/userController");
 const authMiddleware_1 = require("../middleware/authMiddleware");
 const router = express_1.default.Router();
 router.get('/profile', authMiddleware_1.protect, userController_1.getUserProfile);
+router.put('/profile', authMiddleware_1.protect, userController_1.updateProfile);
 router.post('/mentor-profile', authMiddleware_1.protect, userController_1.updateMentorProfile);
 router.post('/mentee-profile', authMiddleware_1.protect, userController_1.updateMenteeProfile);
 exports.default = router;

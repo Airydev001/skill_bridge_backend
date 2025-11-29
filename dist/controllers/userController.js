@@ -12,11 +12,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateMenteeProfile = exports.updateMentorProfile = exports.getUserProfile = void 0;
+exports.updateProfile = exports.updateMenteeProfile = exports.updateMentorProfile = exports.getUserProfile = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const User_1 = __importDefault(require("../models/User"));
 const MentorProfile_1 = __importDefault(require("../models/MentorProfile"));
 const MenteeProfile_1 = __importDefault(require("../models/MenteeProfile"));
+const generateToken_1 = __importDefault(require("../utils/generateToken"));
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
@@ -106,4 +107,67 @@ exports.updateMenteeProfile = (0, express_async_handler_1.default)((req, res) =>
         yield user.save();
     }
     res.json(profile);
+}));
+// @desc    Update user profile (unified)
+// @route   PUT /api/users/profile
+// @access  Private
+exports.updateProfile = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield User_1.default.findById(req.user._id);
+    if (user) {
+        user.name = req.body.name || user.name;
+        user.avatarUrl = req.body.avatarUrl || user.avatarUrl;
+        if (req.body.password) {
+            user.passwordHash = req.body.password;
+        }
+        const updatedUser = yield user.save();
+        // Update specific profile if data provided
+        let profileData = null;
+        if (user.role === 'mentor') {
+            const { bio, skills, yearsExperience, languages, availability } = req.body;
+            let profile = yield MentorProfile_1.default.findOne({ userId: user._id });
+            if (profile) {
+                if (bio)
+                    profile.bio = bio;
+                if (skills)
+                    profile.skills = skills;
+                if (yearsExperience)
+                    profile.yearsExperience = yearsExperience;
+                if (languages)
+                    profile.languages = languages;
+                if (availability)
+                    profile.availability = availability;
+                yield profile.save();
+                profileData = profile;
+            }
+        }
+        else if (user.role === 'mentee') {
+            const { interests, skillLevel, learningGoals, preferredTimes } = req.body;
+            let profile = yield MenteeProfile_1.default.findOne({ userId: user._id });
+            if (profile) {
+                if (interests)
+                    profile.interests = interests;
+                if (skillLevel)
+                    profile.skillLevel = skillLevel;
+                if (learningGoals)
+                    profile.learningGoals = learningGoals;
+                if (preferredTimes)
+                    profile.preferredTimes = preferredTimes;
+                yield profile.save();
+                profileData = profile;
+            }
+        }
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            avatarUrl: updatedUser.avatarUrl,
+            token: (0, generateToken_1.default)(updatedUser._id.toString()),
+            profile: profileData
+        });
+    }
+    else {
+        res.status(404);
+        throw new Error('User not found');
+    }
 }));
