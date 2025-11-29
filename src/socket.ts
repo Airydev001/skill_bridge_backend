@@ -66,6 +66,18 @@ export const initSocket = (httpServer: HttpServer) => {
         });
 
         // Whiteboard Events
+        socket.on('get-whiteboard', async (roomId) => {
+            try {
+                let whiteboard = await Whiteboard.findOne({ roomId });
+                if (!whiteboard) {
+                    whiteboard = await Whiteboard.create({ roomId, strokes: [] });
+                }
+                socket.emit('whiteboard-state', whiteboard.strokes);
+            } catch (error) {
+                console.error('Error loading whiteboard:', error);
+            }
+        });
+
         socket.on('draw-stroke', async ({ roomId, stroke }) => {
             socket.to(roomId).emit('draw-stroke', stroke);
 
