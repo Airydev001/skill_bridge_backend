@@ -24,7 +24,7 @@ const initSocket = (httpServer) => {
         }
     });
     io.on('connection', (socket) => {
-        console.log('User connected:', socket.id);
+        console.log('User connected:', socket.id, '(v2 - Whiteboard Fix)');
         socket.on('join-room', (roomId, userId) => __awaiter(void 0, void 0, void 0, function* () {
             socket.join(roomId);
             socket.join(userId);

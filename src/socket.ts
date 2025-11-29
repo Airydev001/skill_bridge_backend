@@ -12,7 +12,7 @@ export const initSocket = (httpServer: HttpServer) => {
     });
 
     io.on('connection', (socket) => {
-        console.log('User connected:', socket.id);
+        console.log('User connected:', socket.id, '(v2 - Whiteboard Fix)');
 
         socket.on('join-room', async (roomId, userId) => {
             socket.join(roomId);
