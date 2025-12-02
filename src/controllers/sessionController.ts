@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { sendSessionReminder } from '../services/emailService';
 import { checkAndAwardBadges } from '../services/gamificationService';
 import User from '../models/User';
+import { generateSessionSummary } from '../services/aiService';
 
 // @desc    Create new session
 // @route   POST /api/sessions
@@ -96,6 +97,17 @@ export const updateSession = asyncHandler(async (req: Request, res: Response) =>
     if (oldStatus !== 'completed' && session.status === 'completed') {
         await checkAndAwardBadges(session.mentorId.toString());
         await checkAndAwardBadges(session.menteeId.toString());
+
+        // Generate AI Summary
+        try {
+            const summary = await generateSessionSummary(session);
+            if (summary) {
+                session.aiSummary = summary;
+                await session.save();
+            }
+        } catch (error) {
+            console.error('Error generating summary during session update:', error);
+        }
     }
 
     res.json(session);

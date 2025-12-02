@@ -11,6 +11,7 @@ export interface ISession extends Document {
     notes?: string;
     webrtcRoomId: string;
     recordingUrl?: string;
+    aiSummary?: string;
     createdAt: Date;
 }
 
@@ -24,7 +25,8 @@ const sessionSchema = new Schema<ISession>({
     rating: { type: Number },
     notes: { type: String },
     webrtcRoomId: { type: String, required: true },
-    recordingUrl: { type: String }
+    recordingUrl: { type: String },
+    aiSummary: { type: String }
 }, {
     timestamps: true
 });
