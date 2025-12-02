@@ -12,6 +12,7 @@ export interface IUser extends Document {
     isVerified: boolean;
     profile?: mongoose.Types.ObjectId;
     badges: string[];
+    points: number;
     streak: {
         count: number;
         lastSessionDate?: Date;
@@ -29,6 +30,7 @@ const userSchema = new Schema<IUser>({
     lastLogin: { type: Date },
     profile: { type: Schema.Types.ObjectId, refPath: 'role' },
     badges: [{ type: String }],
+    points: { type: Number, default: 0 },
     streak: {
         count: { type: Number, default: 0 },
         lastSessionDate: { type: Date }

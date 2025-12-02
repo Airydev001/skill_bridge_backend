@@ -57,6 +57,7 @@ const userSchema = new mongoose_1.Schema({
     lastLogin: { type: Date },
     profile: { type: mongoose_1.Schema.Types.ObjectId, refPath: 'role' },
     badges: [{ type: String }],
+    points: { type: Number, default: 0 },
     streak: {
         count: { type: Number, default: 0 },
         lastSessionDate: { type: Date }

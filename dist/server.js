@@ -27,12 +27,14 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
 });
 const learningPathRoutes_1 = __importDefault(require("./routes/learningPathRoutes"));
+const challengeRoutes_1 = __importDefault(require("./routes/challengeRoutes"));
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/users', userRoutes_1.default);
 app.use('/api/mentors', mentorRoutes_1.default);
 app.use('/api/sessions', sessionRoutes_1.default);
 app.use('/api/admin', adminRoutes_1.default);
 app.use('/api/learning-paths', learningPathRoutes_1.default);
+app.use('/api/challenges', challengeRoutes_1.default);
 // Serve frontend static files
 const path_1 = __importDefault(require("path"));
 const frontendPath = path_1.default.join(__dirname, '../../frontend/dist');

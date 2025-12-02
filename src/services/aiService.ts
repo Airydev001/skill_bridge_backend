@@ -100,3 +100,67 @@ export const updateLearningPathProgress = async (currentPath: any, sessionSummar
         return null;
     }
 };
+
+export const generateChallenge = async (topic: string, difficulty: string): Promise<any | null> => {
+    try {
+        if (!process.env.GEMINI_API_KEY) return null;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+
+        const prompt = `
+            Generate a coding challenge for a student learning "${topic}" at "${difficulty}" level.
+            Return ONLY a valid JSON object with the following structure:
+            {
+                "title": "Challenge Title",
+                "description": "Detailed problem description...",
+                "category": "${topic}",
+                "difficulty": "${difficulty}",
+                "starterCode": "// Write your code here..."
+            }
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        return JSON.parse(text);
+    } catch (error) {
+        console.error('Error generating challenge:', error);
+        return null;
+    }
+};
+
+export const evaluateSubmission = async (challenge: any, code: string): Promise<any | null> => {
+    try {
+        if (!process.env.GEMINI_API_KEY) return null;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+
+        const prompt = `
+            Evaluate the following code submission for a coding challenge.
+            
+            **Challenge:**
+            Title: ${challenge.title}
+            Description: ${challenge.description}
+            
+            **Student Code:**
+            ${code}
+            
+            **Instructions:**
+            - Check for correctness, efficiency, and code quality.
+            - Return ONLY a valid JSON object with the following structure:
+            {
+                "score": 85, // 0-100
+                "passed": true, // true if score >= 70
+                "feedback": "Constructive feedback..."
+            }
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        return JSON.parse(text);
+    } catch (error) {
+        console.error('Error evaluating submission:', error);
+        return null;
+    }
+};

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateLearningPathProgress = exports.generateLearningPath = exports.generateSessionSummary = void 0;
+exports.evaluateSubmission = exports.generateChallenge = exports.updateLearningPathProgress = exports.generateLearningPath = exports.generateSessionSummary = void 0;
 const generative_ai_1 = require("@google/generative-ai");
 const genAI = new generative_ai_1.GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const generateSessionSummary = (session) => __awaiter(void 0, void 0, void 0, function* () {
@@ -105,3 +105,65 @@ const updateLearningPathProgress = (currentPath, sessionSummary) => __awaiter(vo
     }
 });
 exports.updateLearningPathProgress = updateLearningPathProgress;
+const generateChallenge = (topic, difficulty) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!process.env.GEMINI_API_KEY)
+            return null;
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        const prompt = `
+            Generate a coding challenge for a student learning "${topic}" at "${difficulty}" level.
+            Return ONLY a valid JSON object with the following structure:
+            {
+                "title": "Challenge Title",
+                "description": "Detailed problem description...",
+                "category": "${topic}",
+                "difficulty": "${difficulty}",
+                "starterCode": "// Write your code here..."
+            }
+        `;
+        const result = yield model.generateContent(prompt);
+        const response = yield result.response;
+        const text = response.text();
+        return JSON.parse(text);
+    }
+    catch (error) {
+        console.error('Error generating challenge:', error);
+        return null;
+    }
+});
+exports.generateChallenge = generateChallenge;
+const evaluateSubmission = (challenge, code) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!process.env.GEMINI_API_KEY)
+            return null;
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        const prompt = `
+            Evaluate the following code submission for a coding challenge.
+            
+            **Challenge:**
+            Title: ${challenge.title}
+            Description: ${challenge.description}
+            
+            **Student Code:**
+            ${code}
+            
+            **Instructions:**
+            - Check for correctness, efficiency, and code quality.
+            - Return ONLY a valid JSON object with the following structure:
+            {
+                "score": 85, // 0-100
+                "passed": true, // true if score >= 70
+                "feedback": "Constructive feedback..."
+            }
+        `;
+        const result = yield model.generateContent(prompt);
+        const response = yield result.response;
+        const text = response.text();
+        return JSON.parse(text);
+    }
+    catch (error) {
+        console.error('Error evaluating submission:', error);
+        return null;
+    }
+});
+exports.evaluateSubmission = evaluateSubmission;
