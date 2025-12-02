@@ -20,6 +20,7 @@ const emailService_1 = require("../services/emailService");
 const gamificationService_1 = require("../services/gamificationService");
 const User_1 = __importDefault(require("../models/User"));
 const aiService_1 = require("../services/aiService");
+const LearningPath_1 = __importDefault(require("../models/LearningPath"));
 // @desc    Create new session
 // @route   POST /api/sessions
 // @access  Private
@@ -99,10 +100,18 @@ exports.updateSession = (0, express_async_handler_1.default)((req, res) => __awa
             if (summary) {
                 session.aiSummary = summary;
                 yield session.save();
+                // Update Learning Path Progress
+                const learningPath = yield LearningPath_1.default.findOne({ menteeId: session.menteeId });
+                if (learningPath) {
+                    const updatedPathData = yield (0, aiService_1.updateLearningPathProgress)(learningPath.toObject(), summary);
+                    if (updatedPathData) {
+                        yield LearningPath_1.default.findByIdAndUpdate(learningPath._id, updatedPathData);
+                    }
+                }
             }
         }
         catch (error) {
-            console.error('Error generating summary during session update:', error);
+            console.error('Error generating summary or updating learning path:', error);
         }
     }
     res.json(session);

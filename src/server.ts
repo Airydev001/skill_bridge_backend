@@ -28,11 +28,14 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
 });
 
+import learningPathRoutes from './routes/learningPathRoutes';
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/mentors', mentorRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/learning-paths', learningPathRoutes);
 
 // Serve frontend static files
 import path from 'path';
@@ -49,8 +52,6 @@ app.get('*all', (req, res) => {
         }
     });
 });
-
-app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

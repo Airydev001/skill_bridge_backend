@@ -6,7 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { sendSessionReminder } from '../services/emailService';
 import { checkAndAwardBadges } from '../services/gamificationService';
 import User from '../models/User';
-import { generateSessionSummary } from '../services/aiService';
+import { generateSessionSummary, updateLearningPathProgress } from '../services/aiService';
+import LearningPath from '../models/LearningPath';
 
 // @desc    Create new session
 // @route   POST /api/sessions
@@ -104,9 +105,18 @@ export const updateSession = asyncHandler(async (req: Request, res: Response) =>
             if (summary) {
                 session.aiSummary = summary;
                 await session.save();
+
+                // Update Learning Path Progress
+                const learningPath = await LearningPath.findOne({ menteeId: session.menteeId });
+                if (learningPath) {
+                    const updatedPathData = await updateLearningPathProgress(learningPath.toObject(), summary);
+                    if (updatedPathData) {
+                        await LearningPath.findByIdAndUpdate(learningPath._id, updatedPathData);
+                    }
+                }
             }
         } catch (error) {
-            console.error('Error generating summary during session update:', error);
+            console.error('Error generating summary or updating learning path:', error);
         }
     }
 

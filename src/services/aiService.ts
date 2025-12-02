@@ -37,3 +37,66 @@ export const generateSessionSummary = async (session: ISession): Promise<string 
         return null;
     }
 };
+
+export const generateLearningPath = async (field: string): Promise<any | null> => {
+    try {
+        if (!process.env.GEMINI_API_KEY) return null;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+
+        const prompt = `
+            Generate a comprehensive 4-week learning path for a student interested in "${field}".
+            Return ONLY a valid JSON object with the following structure:
+            {
+                "weeklyPlan": [
+                    { "weekNumber": 1, "topic": "...", "tasks": [{ "id": "w1t1", "title": "...", "description": "...", "isCompleted": false }] }
+                ],
+                "skillTree": [
+                    { "id": "root", "label": "${field} Basics", "children": ["child1", "child2"], "isUnlocked": true, "isCompleted": false },
+                    { "id": "child1", "label": "...", "children": [], "isUnlocked": false, "isCompleted": false }
+                ],
+                "projects": [
+                    { "id": "p1", "title": "...", "description": "...", "deadline": "2024-12-31", "isCompleted": false }
+                ]
+            }
+            Ensure the "deadline" for projects is roughly 1 month from now.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        return JSON.parse(text);
+    } catch (error) {
+        console.error('Error generating learning path:', error);
+        return null;
+    }
+};
+
+export const updateLearningPathProgress = async (currentPath: any, sessionSummary: string): Promise<any | null> => {
+    try {
+        if (!process.env.GEMINI_API_KEY) return null;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+
+        const prompt = `
+            Analyze the following session summary and update the student's learning path progress.
+            
+            **Session Summary:** "${sessionSummary}"
+            
+            **Current Learning Path (JSON):** ${JSON.stringify(currentPath)}
+            
+            **Instructions:**
+            - Mark any tasks in "weeklyPlan" as "isCompleted": true if the session summary indicates they were discussed or mastered.
+            - Mark any nodes in "skillTree" as "isCompleted": true if mastered. Unlock children if parent is completed.
+            - Return the FULLY UPDATED JSON object with the same structure.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        return JSON.parse(text);
+    } catch (error) {
+        console.error('Error updating learning path progress:', error);
+        return null;
+    }
+};
