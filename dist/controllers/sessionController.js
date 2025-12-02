@@ -19,6 +19,7 @@ const uuid_1 = require("uuid");
 const emailService_1 = require("../services/emailService");
 const gamificationService_1 = require("../services/gamificationService");
 const User_1 = __importDefault(require("../models/User"));
+const aiService_1 = require("../services/aiService");
 // @desc    Create new session
 // @route   POST /api/sessions
 // @access  Private
@@ -92,6 +93,17 @@ exports.updateSession = (0, express_async_handler_1.default)((req, res) => __awa
     if (oldStatus !== 'completed' && session.status === 'completed') {
         yield (0, gamificationService_1.checkAndAwardBadges)(session.mentorId.toString());
         yield (0, gamificationService_1.checkAndAwardBadges)(session.menteeId.toString());
+        // Generate AI Summary
+        try {
+            const summary = yield (0, aiService_1.generateSessionSummary)(session);
+            if (summary) {
+                session.aiSummary = summary;
+                yield session.save();
+            }
+        }
+        catch (error) {
+            console.error('Error generating summary during session update:', error);
+        }
     }
     res.json(session);
 }));

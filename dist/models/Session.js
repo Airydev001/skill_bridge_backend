@@ -44,7 +44,8 @@ const sessionSchema = new mongoose_1.Schema({
     rating: { type: Number },
     notes: { type: String },
     webrtcRoomId: { type: String, required: true },
-    recordingUrl: { type: String }
+    recordingUrl: { type: String },
+    aiSummary: { type: String }
 }, {
     timestamps: true
 });
