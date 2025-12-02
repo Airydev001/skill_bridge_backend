@@ -57,7 +57,14 @@ exports.getMentorSlots = (0, express_async_handler_1.default)((req, res) => __aw
     });
     const bookedTimes = existingSessions.map(s => s.startAt.toISOString());
     // 5. Filter out booked slots
-    const availableSlots = potentialSlots.filter(slot => !bookedTimes.includes(slot));
+    // 5. Filter out booked slots AND past slots
+    const now = new Date();
+    const availableSlots = potentialSlots.filter(slot => {
+        const slotTime = new Date(slot);
+        const isBooked = bookedTimes.includes(slot);
+        const isPast = slotTime < now;
+        return !isBooked && !isPast;
+    });
     res.json(availableSlots);
 }));
 // @desc    Get all mentors with filters
