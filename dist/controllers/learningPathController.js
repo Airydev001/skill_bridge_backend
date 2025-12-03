@@ -18,7 +18,7 @@ const aiService_1 = require("../services/aiService");
 const createPath = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { field } = req.body;
-        const userId = req.user.userId;
+        const userId = req.user._id;
         // Check if path already exists for this field
         const existingPath = yield LearningPath_1.default.findOne({ menteeId: userId, field });
         if (existingPath) {
@@ -41,7 +41,7 @@ const createPath = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.createPath = createPath;
 const getPath = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const userId = req.user.userId;
+        const userId = req.user._id;
         const path = yield LearningPath_1.default.findOne({ menteeId: userId }).sort({ createdAt: -1 }); // Get latest
         if (!path) {
             return res.status(404).json({ message: 'No learning path found' });

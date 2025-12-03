@@ -5,7 +5,7 @@ import { generateLearningPath } from '../services/aiService';
 export const createPath = async (req: Request, res: Response) => {
     try {
         const { field } = req.body;
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user._id;
 
         // Check if path already exists for this field
         const existingPath = await LearningPath.findOne({ menteeId: userId, field });
@@ -35,7 +35,7 @@ export const createPath = async (req: Request, res: Response) => {
 
 export const getPath = async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user._id;
         const path = await LearningPath.findOne({ menteeId: userId }).sort({ createdAt: -1 }); // Get latest
         if (!path) {
             return res.status(404).json({ message: 'No learning path found' });
