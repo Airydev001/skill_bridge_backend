@@ -59,18 +59,36 @@ exports.createSession = (0, express_async_handler_1.default)((req, res) => __awa
         sendEmails();
     });
 }));
-// @desc    Get user sessions
+// @desc    Get user sessions with pagination and filtering
 // @route   GET /api/sessions
 // @access  Private
 exports.getSessions = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const sessions = yield Session_1.default.find({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const status = req.query.status;
+    const query = {
         $or: [{ mentorId: req.user._id }, { menteeId: req.user._id }]
-    }).populate('mentorId', 'name avatarUrl').populate('menteeId', 'name avatarUrl');
-    console.log(`[getSessions] Found ${sessions.length} total sessions for user ${req.user._id}`);
-    // Filter out sessions with missing data
-    const validSessions = sessions.filter(session => session.mentorId && session.menteeId);
-    console.log(`[getSessions] Returning ${validSessions.length} valid sessions after filtering`);
-    res.json(validSessions);
+    };
+    if (status) {
+        query.status = status;
+    }
+    const total = yield Session_1.default.countDocuments(query);
+    const sessions = yield Session_1.default.find(query)
+        .populate('mentorId', 'name avatarUrl')
+        .populate('menteeId', 'name avatarUrl')
+        .sort({ startAt: status === 'scheduled' ? 1 : -1 }) // Sort upcoming ascending, past descending
+        .skip((page - 1) * limit)
+        .limit(limit);
+    console.log(`[getSessions] Found ${sessions.length} sessions (Total: ${total}) for user ${req.user._id} with status ${status || 'all'}`);
+    res.json({
+        sessions,
+        pagination: {
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            limit
+        }
+    });
 }));
 // @desc    Update session status
 // @route   PATCH /api/sessions/:id

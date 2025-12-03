@@ -53,22 +53,41 @@ export const createSession = asyncHandler(async (req: Request, res: Response) =>
     });
 });
 
-// @desc    Get user sessions
+// @desc    Get user sessions with pagination and filtering
 // @route   GET /api/sessions
 // @access  Private
 export const getSessions = asyncHandler(async (req: Request, res: Response) => {
-    const sessions = await Session.find({
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const status = req.query.status as string;
+
+    const query: any = {
         $or: [{ mentorId: req.user._id }, { menteeId: req.user._id }]
-    }).populate('mentorId', 'name avatarUrl').populate('menteeId', 'name avatarUrl');
+    };
 
-    console.log(`[getSessions] Found ${sessions.length} total sessions for user ${req.user._id}`);
+    if (status) {
+        query.status = status;
+    }
 
-    // Filter out sessions with missing data
-    const validSessions = sessions.filter(session => session.mentorId && session.menteeId);
+    const total = await Session.countDocuments(query);
+    const sessions = await Session.find(query)
+        .populate('mentorId', 'name avatarUrl')
+        .populate('menteeId', 'name avatarUrl')
+        .sort({ startAt: status === 'scheduled' ? 1 : -1 }) // Sort upcoming ascending, past descending
+        .skip((page - 1) * limit)
+        .limit(limit);
 
-    console.log(`[getSessions] Returning ${validSessions.length} valid sessions after filtering`);
+    console.log(`[getSessions] Found ${sessions.length} sessions (Total: ${total}) for user ${req.user._id} with status ${status || 'all'}`);
 
-    res.json(validSessions);
+    res.json({
+        sessions,
+        pagination: {
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            limit
+        }
+    });
 });
 
 // @desc    Update session status
