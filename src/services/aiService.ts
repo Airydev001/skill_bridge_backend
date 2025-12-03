@@ -15,7 +15,7 @@ export const generateSessionSummary = async (session: ISession): Promise<string 
             return null;
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
         const prompt = `
             Please generate a concise and professional summary for the following mentorship session.
@@ -47,7 +47,7 @@ export const generateLearningPath = async (field: string): Promise<any | null> =
     try {
         if (!process.env.GEMINI_API_KEY) return null;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro", generationConfig: { responseMimeType: "application/json" } });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro", generationConfig: { responseMimeType: "application/json" } });
 
         const prompt = `
             Generate a comprehensive 4-week learning path for a student interested in "${field}".
@@ -87,7 +87,7 @@ export const updateLearningPathProgress = async (currentPath: any, sessionSummar
     try {
         if (!process.env.GEMINI_API_KEY) return null;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro", generationConfig: { responseMimeType: "application/json" } });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro", generationConfig: { responseMimeType: "application/json" } });
 
         const prompt = `
             Analyze the following session summary and update the student's learning path progress.
@@ -116,7 +116,7 @@ export const generateChallenge = async (topic: string, difficulty: string): Prom
     try {
         if (!process.env.GEMINI_API_KEY) return null;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro", generationConfig: { responseMimeType: "application/json" } });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro", generationConfig: { responseMimeType: "application/json" } });
 
         const prompt = `
             Generate a coding challenge for a student learning "${topic}" at "${difficulty}" level.
@@ -144,7 +144,7 @@ export const evaluateSubmission = async (challenge: any, code: string): Promise<
     try {
         if (!process.env.GEMINI_API_KEY) return null;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro", generationConfig: { responseMimeType: "application/json" } });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro", generationConfig: { responseMimeType: "application/json" } });
 
         const prompt = `
             Evaluate the following code submission for a coding challenge.
