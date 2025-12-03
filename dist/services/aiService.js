@@ -18,7 +18,7 @@ const generateSessionSummary = (session) => __awaiter(void 0, void 0, void 0, fu
             console.warn('GEMINI_API_KEY is not set. Skipping AI summary generation.');
             return null;
         }
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const prompt = `
             Please generate a concise and professional summary for the following mentorship session.
             
@@ -44,11 +44,12 @@ const generateSessionSummary = (session) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.generateSessionSummary = generateSessionSummary;
+// https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
 const generateLearningPath = (field) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!process.env.GEMINI_API_KEY)
             return null;
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
         const prompt = `
             Generate a comprehensive 4-week learning path for a student interested in "${field}".
             Return ONLY a valid JSON object with the following structure:
@@ -81,7 +82,7 @@ const updateLearningPathProgress = (currentPath, sessionSummary) => __awaiter(vo
     try {
         if (!process.env.GEMINI_API_KEY)
             return null;
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
         const prompt = `
             Analyze the following session summary and update the student's learning path progress.
             
@@ -109,7 +110,7 @@ const generateChallenge = (topic, difficulty) => __awaiter(void 0, void 0, void 
     try {
         if (!process.env.GEMINI_API_KEY)
             return null;
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
         const prompt = `
             Generate a coding challenge for a student learning "${topic}" at "${difficulty}" level.
             Return ONLY a valid JSON object with the following structure:
@@ -136,7 +137,7 @@ const evaluateSubmission = (challenge, code) => __awaiter(void 0, void 0, void 0
     try {
         if (!process.env.GEMINI_API_KEY)
             return null;
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
         const prompt = `
             Evaluate the following code submission for a coding challenge.
             
