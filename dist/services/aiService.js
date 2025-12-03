@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.evaluateSubmission = exports.generateChallenge = exports.updateLearningPathProgress = exports.generateLearningPath = exports.generateSessionSummary = void 0;
+exports.generateTopicResources = exports.evaluateSubmission = exports.generateChallenge = exports.updateLearningPathProgress = exports.generateLearningPath = exports.generateSessionSummary = void 0;
 const generative_ai_1 = require("@google/generative-ai");
 const genAI = new generative_ai_1.GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 // Helper to clean JSON string
@@ -177,3 +177,27 @@ const evaluateSubmission = (challenge, code) => __awaiter(void 0, void 0, void 0
     }
 });
 exports.evaluateSubmission = evaluateSubmission;
+const generateTopicResources = (topic) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro", generationConfig: { responseMimeType: "application/json" } });
+        const prompt = `
+        For the topic "${topic}", provide a brief explanation and 3-5 high-quality learning resources.
+        Return ONLY a JSON object with this structure:
+        {
+            "explanation": "A concise explanation of the concept (2-3 sentences).",
+            "resources": [
+                { "title": "Resource Title", "url": "URL to the resource", "type": "Video/Article/Course" }
+            ]
+        }
+        `;
+        const result = yield model.generateContent(prompt);
+        const response = yield result.response;
+        const text = response.text();
+        return JSON.parse(cleanJSON(text));
+    }
+    catch (error) {
+        console.error('Error generating topic resources:', error);
+        return null;
+    }
+});
+exports.generateTopicResources = generateTopicResources;

@@ -175,3 +175,29 @@ export const evaluateSubmission = async (challenge: any, code: string): Promise<
         return null;
     }
 };
+
+export const generateTopicResources = async (topic: string) => {
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro", generationConfig: { responseMimeType: "application/json" } });
+
+        const prompt = `
+        For the topic "${topic}", provide a brief explanation and 3-5 high-quality learning resources.
+        Return ONLY a JSON object with this structure:
+        {
+            "explanation": "A concise explanation of the concept (2-3 sentences).",
+            "resources": [
+                { "title": "Resource Title", "url": "URL to the resource", "type": "Video/Article/Course" }
+            ]
+        }
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        return JSON.parse(cleanJSON(text));
+    } catch (error) {
+        console.error('Error generating topic resources:', error);
+        return null;
+    }
+};

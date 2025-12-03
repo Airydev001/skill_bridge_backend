@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import LearningPath from '../models/LearningPath';
-import { generateLearningPath } from '../services/aiService';
+import { generateLearningPath, generateTopicResources } from '../services/aiService';
 
 export const createPath = async (req: Request, res: Response) => {
     try {
@@ -43,6 +43,36 @@ export const getPath = async (req: Request, res: Response) => {
         res.json(path);
     } catch (error) {
         console.error('Error fetching learning path:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const deletePath = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user._id;
+        await LearningPath.deleteMany({ menteeId: userId });
+        res.json({ message: 'Learning path deleted' });
+    } catch (error) {
+        console.error('Error deleting learning path:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const generateResources = async (req: Request, res: Response) => {
+    try {
+        const { topic } = req.body;
+        if (!topic) {
+            return res.status(400).json({ message: 'Topic is required' });
+        }
+
+        const resources = await generateTopicResources(topic);
+        if (!resources) {
+            return res.status(500).json({ message: 'Failed to generate resources' });
+        }
+
+        res.json(resources);
+    } catch (error) {
+        console.error('Error generating resources:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };

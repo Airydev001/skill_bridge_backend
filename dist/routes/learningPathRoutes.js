@@ -9,4 +9,6 @@ const authMiddleware_1 = require("../middleware/authMiddleware");
 const router = express_1.default.Router();
 router.post('/', authMiddleware_1.protect, learningPathController_1.createPath);
 router.get('/', authMiddleware_1.protect, learningPathController_1.getPath);
+router.delete('/', authMiddleware_1.protect, learningPathController_1.deletePath);
+router.post('/resources', authMiddleware_1.protect, learningPathController_1.generateResources);
 exports.default = router;
