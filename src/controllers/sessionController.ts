@@ -96,28 +96,40 @@ export const updateSession = asyncHandler(async (req: Request, res: Response) =>
 
     // Check for gamification if session completed
     if (oldStatus !== 'completed' && session.status === 'completed') {
+        console.log(`[updateSession] Session ${session._id} completed. Triggering post-completion tasks.`);
+
         await checkAndAwardBadges(session.mentorId.toString());
         await checkAndAwardBadges(session.menteeId.toString());
 
         // Generate AI Summary
         try {
+            console.log(`[updateSession] Generating AI summary for session ${session._id}...`);
             const summary = await generateSessionSummary(session);
+            console.log(`[updateSession] AI Summary result: ${summary ? 'Success' : 'Failed (null)'}`);
+
             if (summary) {
                 session.aiSummary = summary;
                 await session.save();
+                console.log(`[updateSession] AI summary saved to session.`);
 
                 // Update Learning Path Progress
                 const learningPath = await LearningPath.findOne({ menteeId: session.menteeId });
                 if (learningPath) {
+                    console.log(`[updateSession] Updating learning path for mentee ${session.menteeId}...`);
                     const updatedPathData = await updateLearningPathProgress(learningPath.toObject(), summary);
                     if (updatedPathData) {
                         await LearningPath.findByIdAndUpdate(learningPath._id, updatedPathData);
+                        console.log(`[updateSession] Learning path updated.`);
                     }
+                } else {
+                    console.log(`[updateSession] No learning path found for mentee ${session.menteeId}.`);
                 }
             }
         } catch (error) {
-            console.error('Error generating summary or updating learning path:', error);
+            console.error('[updateSession] Error generating summary or updating learning path:', error);
         }
+    } else {
+        console.log(`[updateSession] Status change ${oldStatus} -> ${session.status} did not trigger completion tasks.`);
     }
 
     res.json(session);

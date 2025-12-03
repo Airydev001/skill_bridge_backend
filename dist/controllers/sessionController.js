@@ -92,27 +92,39 @@ exports.updateSession = (0, express_async_handler_1.default)((req, res) => __awa
     yield session.save();
     // Check for gamification if session completed
     if (oldStatus !== 'completed' && session.status === 'completed') {
+        console.log(`[updateSession] Session ${session._id} completed. Triggering post-completion tasks.`);
         yield (0, gamificationService_1.checkAndAwardBadges)(session.mentorId.toString());
         yield (0, gamificationService_1.checkAndAwardBadges)(session.menteeId.toString());
         // Generate AI Summary
         try {
+            console.log(`[updateSession] Generating AI summary for session ${session._id}...`);
             const summary = yield (0, aiService_1.generateSessionSummary)(session);
+            console.log(`[updateSession] AI Summary result: ${summary ? 'Success' : 'Failed (null)'}`);
             if (summary) {
                 session.aiSummary = summary;
                 yield session.save();
+                console.log(`[updateSession] AI summary saved to session.`);
                 // Update Learning Path Progress
                 const learningPath = yield LearningPath_1.default.findOne({ menteeId: session.menteeId });
                 if (learningPath) {
+                    console.log(`[updateSession] Updating learning path for mentee ${session.menteeId}...`);
                     const updatedPathData = yield (0, aiService_1.updateLearningPathProgress)(learningPath.toObject(), summary);
                     if (updatedPathData) {
                         yield LearningPath_1.default.findByIdAndUpdate(learningPath._id, updatedPathData);
+                        console.log(`[updateSession] Learning path updated.`);
                     }
+                }
+                else {
+                    console.log(`[updateSession] No learning path found for mentee ${session.menteeId}.`);
                 }
             }
         }
         catch (error) {
-            console.error('Error generating summary or updating learning path:', error);
+            console.error('[updateSession] Error generating summary or updating learning path:', error);
         }
+    }
+    else {
+        console.log(`[updateSession] Status change ${oldStatus} -> ${session.status} did not trigger completion tasks.`);
     }
     res.json(session);
 }));
