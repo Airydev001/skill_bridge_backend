@@ -13,6 +13,7 @@ export interface ISession extends Document {
     recordingUrl?: string;
     aiSummary?: string;
     createdAt: Date;
+    activeStartedAt?: Date;
 }
 
 const sessionSchema = new Schema<ISession>({
@@ -20,6 +21,7 @@ const sessionSchema = new Schema<ISession>({
     menteeId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     startAt: { type: Date, required: true },
     endAt: { type: Date, required: true },
+    activeStartedAt: { type: Date },
     status: { type: String, enum: ['scheduled', 'completed', 'cancelled', 'no_show'], default: 'scheduled' },
     agenda: { type: String, required: true },
     rating: { type: Number },

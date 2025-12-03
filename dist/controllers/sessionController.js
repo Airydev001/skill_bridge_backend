@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.forceSessionSummary = exports.getSessionById = exports.updateSession = exports.getSessions = exports.createSession = void 0;
+exports.startSession = exports.forceSessionSummary = exports.getSessionById = exports.updateSession = exports.getSessions = exports.createSession = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const Session_1 = __importDefault(require("../models/Session"));
 const uuid_1 = require("uuid");
@@ -205,4 +205,28 @@ exports.forceSessionSummary = (0, express_async_handler_1.default)((req, res) =>
         console.error('[forceSessionSummary] Error:', error);
         res.status(500).json({ message: 'Error generating summary', error: error.message });
     }
+}));
+// @desc    Start session timer (when both users connect)
+// @route   POST /api/sessions/:id/start
+// @access  Private
+exports.startSession = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const session = yield Session_1.default.findById(req.params.id);
+    if (!session) {
+        res.status(404);
+        throw new Error('Session not found');
+    }
+    if (session.mentorId.toString() !== req.user._id.toString() && session.menteeId.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('Not authorized');
+    }
+    // Only set start time if not already set
+    if (!session.activeStartedAt) {
+        session.activeStartedAt = new Date();
+        yield session.save();
+        console.log(`[startSession] Session ${session._id} started at ${session.activeStartedAt}`);
+    }
+    else {
+        console.log(`[startSession] Session ${session._id} already started at ${session.activeStartedAt}`);
+    }
+    res.json(session);
 }));

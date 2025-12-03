@@ -39,6 +39,7 @@ const sessionSchema = new mongoose_1.Schema({
     menteeId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
     startAt: { type: Date, required: true },
     endAt: { type: Date, required: true },
+    activeStartedAt: { type: Date },
     status: { type: String, enum: ['scheduled', 'completed', 'cancelled', 'no_show'], default: 'scheduled' },
     agenda: { type: String, required: true },
     rating: { type: Number },

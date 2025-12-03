@@ -219,3 +219,31 @@ export const forceSessionSummary = asyncHandler(async (req: Request, res: Respon
         res.status(500).json({ message: 'Error generating summary', error: error.message });
     }
 });
+
+// @desc    Start session timer (when both users connect)
+// @route   POST /api/sessions/:id/start
+// @access  Private
+export const startSession = asyncHandler(async (req: Request, res: Response) => {
+    const session = await Session.findById(req.params.id);
+
+    if (!session) {
+        res.status(404);
+        throw new Error('Session not found');
+    }
+
+    if (session.mentorId.toString() !== req.user._id.toString() && session.menteeId.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('Not authorized');
+    }
+
+    // Only set start time if not already set
+    if (!session.activeStartedAt) {
+        session.activeStartedAt = new Date();
+        await session.save();
+        console.log(`[startSession] Session ${session._id} started at ${session.activeStartedAt}`);
+    } else {
+        console.log(`[startSession] Session ${session._id} already started at ${session.activeStartedAt}`);
+    }
+
+    res.json(session);
+});
