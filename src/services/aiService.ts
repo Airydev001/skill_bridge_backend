@@ -3,6 +3,11 @@ import { ISession } from '../models/Session';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+// Helper to clean JSON string
+const cleanJSON = (text: string) => {
+    return text.replace(/```json\n?|\n?```/g, '').trim();
+};
+
 export const generateSessionSummary = async (session: ISession): Promise<string | null> => {
     try {
         if (!process.env.GEMINI_API_KEY) {
@@ -37,7 +42,6 @@ export const generateSessionSummary = async (session: ISession): Promise<string 
         return null;
     }
 };
-// https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
 
 export const generateLearningPath = async (field: string): Promise<any | null> => {
     try {
@@ -65,7 +69,7 @@ export const generateLearningPath = async (field: string): Promise<any | null> =
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        const text = cleanJSON(response.text());
         return JSON.parse(text);
     } catch (error) {
         console.error('Error generating learning path:', error);
@@ -94,7 +98,7 @@ export const updateLearningPathProgress = async (currentPath: any, sessionSummar
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        const text = cleanJSON(response.text());
         return JSON.parse(text);
     } catch (error) {
         console.error('Error updating learning path progress:', error);
@@ -122,7 +126,7 @@ export const generateChallenge = async (topic: string, difficulty: string): Prom
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        const text = cleanJSON(response.text());
         return JSON.parse(text);
     } catch (error) {
         console.error('Error generating challenge:', error);
@@ -158,7 +162,7 @@ export const evaluateSubmission = async (challenge: any, code: string): Promise<
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        const text = cleanJSON(response.text());
         return JSON.parse(text);
     } catch (error) {
         console.error('Error evaluating submission:', error);
