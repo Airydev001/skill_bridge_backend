@@ -156,3 +156,47 @@ export const getSessionById = asyncHandler(async (req: Request, res: Response) =
         throw new Error('Session not found');
     }
 });
+// @desc    Force generate AI summary for a session
+// @route   POST /api/sessions/:id/analyze
+// @access  Private
+export const forceSessionSummary = asyncHandler(async (req: Request, res: Response) => {
+    const session = await Session.findById(req.params.id);
+
+    if (!session) {
+        res.status(404);
+        throw new Error('Session not found');
+    }
+
+    if (session.mentorId.toString() !== req.user._id.toString() && session.menteeId.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('Not authorized');
+    }
+
+    console.log(`[forceSessionSummary] Manually triggering AI summary for session ${session._id}...`);
+
+    try {
+        const summary = await generateSessionSummary(session);
+        console.log(`[forceSessionSummary] AI Summary result: ${summary ? 'Success' : 'Failed (null)'}`);
+
+        if (summary) {
+            session.aiSummary = summary;
+            await session.save();
+
+            // Update Learning Path Progress
+            const learningPath = await LearningPath.findOne({ menteeId: session.menteeId });
+            if (learningPath) {
+                const updatedPathData = await updateLearningPathProgress(learningPath.toObject(), summary);
+                if (updatedPathData) {
+                    await LearningPath.findByIdAndUpdate(learningPath._id, updatedPathData);
+                }
+            }
+
+            res.json({ message: 'Summary generated successfully', summary });
+        } else {
+            res.status(500).json({ message: 'Failed to generate summary. Check server logs for details.' });
+        }
+    } catch (error: any) {
+        console.error('[forceSessionSummary] Error:', error);
+        res.status(500).json({ message: 'Error generating summary', error: error.message });
+    }
+});

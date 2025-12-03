@@ -12,4 +12,5 @@ router.post('/', sessionController_1.createSession);
 router.get('/', sessionController_1.getSessions);
 router.get('/:id', sessionController_1.getSessionById);
 router.patch('/:id', sessionController_1.updateSession);
+router.post('/:id/analyze', sessionController_1.forceSessionSummary);
 exports.default = router;

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSessionById = exports.updateSession = exports.getSessions = exports.createSession = void 0;
+exports.forceSessionSummary = exports.getSessionById = exports.updateSession = exports.getSessions = exports.createSession = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const Session_1 = __importDefault(require("../models/Session"));
 const uuid_1 = require("uuid");
@@ -147,5 +147,44 @@ exports.getSessionById = (0, express_async_handler_1.default)((req, res) => __aw
     else {
         res.status(404);
         throw new Error('Session not found');
+    }
+}));
+// @desc    Force generate AI summary for a session
+// @route   POST /api/sessions/:id/analyze
+// @access  Private
+exports.forceSessionSummary = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const session = yield Session_1.default.findById(req.params.id);
+    if (!session) {
+        res.status(404);
+        throw new Error('Session not found');
+    }
+    if (session.mentorId.toString() !== req.user._id.toString() && session.menteeId.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('Not authorized');
+    }
+    console.log(`[forceSessionSummary] Manually triggering AI summary for session ${session._id}...`);
+    try {
+        const summary = yield (0, aiService_1.generateSessionSummary)(session);
+        console.log(`[forceSessionSummary] AI Summary result: ${summary ? 'Success' : 'Failed (null)'}`);
+        if (summary) {
+            session.aiSummary = summary;
+            yield session.save();
+            // Update Learning Path Progress
+            const learningPath = yield LearningPath_1.default.findOne({ menteeId: session.menteeId });
+            if (learningPath) {
+                const updatedPathData = yield (0, aiService_1.updateLearningPathProgress)(learningPath.toObject(), summary);
+                if (updatedPathData) {
+                    yield LearningPath_1.default.findByIdAndUpdate(learningPath._id, updatedPathData);
+                }
+            }
+            res.json({ message: 'Summary generated successfully', summary });
+        }
+        else {
+            res.status(500).json({ message: 'Failed to generate summary. Check server logs for details.' });
+        }
+    }
+    catch (error) {
+        console.error('[forceSessionSummary] Error:', error);
+        res.status(500).json({ message: 'Error generating summary', error: error.message });
     }
 }));
