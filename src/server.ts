@@ -30,6 +30,7 @@ app.get('/health', (req, res) => {
 
 import learningPathRoutes from './routes/learningPathRoutes';
 import challengeRoutes from './routes/challengeRoutes';
+import matchRoutes from './routes/matchRoutes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -38,6 +39,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/learning-paths', learningPathRoutes);
 app.use('/api/challenges', challengeRoutes);
+app.use('/api/matches', matchRoutes);
 
 // Serve frontend static files
 import path from 'path';

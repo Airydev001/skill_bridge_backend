@@ -32,6 +32,10 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response) =
     }
 });
 
+import { generateEmbedding } from '../services/aiService';
+
+// ... (imports)
+
 // @desc    Create/Update Mentor Profile
 // @route   POST /api/users/mentor-profile
 // @access  Private
@@ -44,6 +48,10 @@ export const updateMentorProfile = asyncHandler(async (req: Request, res: Respon
         throw new Error('User not authorized as mentor');
     }
 
+    // Generate embedding text
+    const embeddingText = `Bio: ${bio}. Skills: ${skills.join(', ')}. Experience: ${yearsExperience} years. Languages: ${languages.join(', ')}.`;
+    const embedding = await generateEmbedding(embeddingText);
+
     let profile = await MentorProfile.findOne({ userId: req.user._id });
 
     if (profile) {
@@ -52,6 +60,7 @@ export const updateMentorProfile = asyncHandler(async (req: Request, res: Respon
         profile.yearsExperience = yearsExperience || profile.yearsExperience;
         profile.languages = languages || profile.languages;
         profile.availability = availability || profile.availability;
+        if (embedding) profile.embedding = embedding;
         await profile.save();
     } else {
         profile = await MentorProfile.create({
@@ -60,7 +69,8 @@ export const updateMentorProfile = asyncHandler(async (req: Request, res: Respon
             skills,
             yearsExperience,
             languages,
-            availability
+            availability,
+            embedding: embedding || []
         });
         user.profile = profile._id as any;
         await user.save();
@@ -81,6 +91,10 @@ export const updateMenteeProfile = asyncHandler(async (req: Request, res: Respon
         throw new Error('User not authorized as mentee');
     }
 
+    // Generate embedding text
+    const embeddingText = `Interests: ${interests.join(', ')}. Skill Level: ${skillLevel}. Goals: ${learningGoals.join(', ')}.`;
+    const embedding = await generateEmbedding(embeddingText);
+
     let profile = await MenteeProfile.findOne({ userId: req.user._id });
 
     if (profile) {
@@ -88,6 +102,7 @@ export const updateMenteeProfile = asyncHandler(async (req: Request, res: Respon
         profile.skillLevel = skillLevel || profile.skillLevel;
         profile.learningGoals = learningGoals || profile.learningGoals;
         profile.preferredTimes = preferredTimes || profile.preferredTimes;
+        if (embedding) profile.embedding = embedding;
         await profile.save();
     } else {
         profile = await MenteeProfile.create({
@@ -95,7 +110,8 @@ export const updateMenteeProfile = asyncHandler(async (req: Request, res: Respon
             interests,
             skillLevel,
             learningGoals,
-            preferredTimes
+            preferredTimes,
+            embedding: embedding || []
         });
         user.profile = profile._id as any;
         await user.save();

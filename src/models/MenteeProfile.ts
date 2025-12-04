@@ -6,6 +6,7 @@ export interface IMenteeProfile extends Document {
     skillLevel: 'beginner' | 'intermediate' | 'advanced';
     learningGoals: string[];
     preferredTimes: string[];
+    embedding?: number[];
 }
 
 const menteeProfileSchema = new Schema<IMenteeProfile>({
@@ -13,7 +14,8 @@ const menteeProfileSchema = new Schema<IMenteeProfile>({
     interests: [{ type: String }],
     skillLevel: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
     learningGoals: [{ type: String }],
-    preferredTimes: [{ type: String }]
+    preferredTimes: [{ type: String }],
+    embedding: { type: [Number], index: true }
 }, {
     timestamps: true
 });

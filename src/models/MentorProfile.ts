@@ -17,6 +17,7 @@ export interface IMentorProfile extends Document {
         menteesHelped: number;
         hoursDonated: number;
     };
+    embedding?: number[];
 }
 
 const mentorProfileSchema = new Schema<IMentorProfile>({
@@ -35,7 +36,8 @@ const mentorProfileSchema = new Schema<IMentorProfile>({
     metrics: {
         menteesHelped: { type: Number, default: 0 },
         hoursDonated: { type: Number, default: 0 }
-    }
+    },
+    embedding: { type: [Number], index: true }
 }, {
     timestamps: true
 });
