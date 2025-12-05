@@ -39,7 +39,8 @@ const menteeProfileSchema = new mongoose_1.Schema({
     interests: [{ type: String }],
     skillLevel: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
     learningGoals: [{ type: String }],
-    preferredTimes: [{ type: String }]
+    preferredTimes: [{ type: String }],
+    embedding: { type: [Number], index: true }
 }, {
     timestamps: true
 });

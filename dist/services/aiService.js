@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateTopicResources = exports.evaluateSubmission = exports.generateChallenge = exports.updateLearningPathProgress = exports.generateLearningPath = exports.generateSessionSummary = void 0;
+exports.moderateContent = exports.generateEmbedding = exports.generateTopicResources = exports.evaluateSubmission = exports.generateChallenge = exports.updateLearningPathProgress = exports.generateLearningPath = exports.generateSessionSummary = void 0;
 const generative_ai_1 = require("@google/generative-ai");
 const genAI = new generative_ai_1.GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 // Helper to clean JSON string
@@ -77,12 +77,6 @@ const generateLearningPath = (field) => __awaiter(void 0, void 0, void 0, functi
     }
     catch (error) {
         console.error('Error generating learning path:', error);
-        if (error.response) {
-            console.error('Gemini API Error Response:', JSON.stringify(error.response, null, 2));
-        }
-        if (error.message) {
-            console.error('Error Message:', error.message);
-        }
         return null;
     }
 });
@@ -201,3 +195,45 @@ const generateTopicResources = (topic) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.generateTopicResources = generateTopicResources;
+const generateEmbedding = (text) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!process.env.GEMINI_API_KEY)
+            return null;
+        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const result = yield model.embedContent(text);
+        const embedding = result.embedding;
+        return embedding.values;
+    }
+    catch (error) {
+        console.error('Error generating embedding:', error);
+        return null;
+    }
+});
+exports.generateEmbedding = generateEmbedding;
+const moderateContent = (text) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!process.env.GEMINI_API_KEY)
+            return null;
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro", generationConfig: { responseMimeType: "application/json" } });
+        const prompt = `
+            Analyze the following text for safety violations, including harassment, hate speech, sexual content, or dangerous activities.
+            
+            Text: "${text}"
+            
+            Return ONLY a JSON object:
+            {
+                "flagged": boolean,
+                "reason": "Brief explanation if flagged, otherwise null"
+            }
+        `;
+        const result = yield model.generateContent(prompt);
+        const response = yield result.response;
+        const jsonText = cleanJSON(response.text());
+        return JSON.parse(jsonText);
+    }
+    catch (error) {
+        console.error('Error moderating content:', error);
+        return null;
+    }
+});
+exports.moderateContent = moderateContent;

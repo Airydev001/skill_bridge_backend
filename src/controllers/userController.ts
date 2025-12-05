@@ -32,7 +32,7 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response) =
     }
 });
 
-import { generateEmbedding } from '../services/aiService';
+import { generateEmbedding, moderateContent } from '../services/aiService';
 
 // ... (imports)
 
@@ -46,6 +46,15 @@ export const updateMentorProfile = asyncHandler(async (req: Request, res: Respon
     if (!user || user.role !== 'mentor') {
         res.status(400);
         throw new Error('User not authorized as mentor');
+    }
+
+    // AI Content Moderation
+    if (bio) {
+        const moderationResult = await moderateContent(bio);
+        if (moderationResult && moderationResult.flagged) {
+            res.status(400);
+            throw new Error(`Profile update rejected: ${moderationResult.reason}`);
+        }
     }
 
     // Generate embedding text
@@ -89,6 +98,14 @@ export const updateMenteeProfile = asyncHandler(async (req: Request, res: Respon
     if (!user || user.role !== 'mentee') {
         res.status(400);
         throw new Error('User not authorized as mentee');
+    }
+
+    // AI Content Moderation
+    const contentToCheck = `${interests.join(' ')} ${learningGoals.join(' ')}`;
+    const moderationResult = await moderateContent(contentToCheck);
+    if (moderationResult && moderationResult.flagged) {
+        res.status(400);
+        throw new Error(`Profile update rejected: ${moderationResult.reason}`);
     }
 
     // Generate embedding text

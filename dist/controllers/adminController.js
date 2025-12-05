@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateReportStatus = exports.getReports = exports.getAllUsers = exports.getAdminStats = void 0;
+exports.verifyMentor = exports.updateReportStatus = exports.getReports = exports.getAllUsers = exports.getAdminStats = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const User_1 = __importDefault(require("../models/User"));
 const Session_1 = __importDefault(require("../models/Session"));
@@ -74,4 +74,19 @@ exports.updateReportStatus = (0, express_async_handler_1.default)((req, res) => 
     report.status = status;
     yield report.save();
     res.json(report);
+}));
+// @desc    Verify a mentor
+// @route   PUT /api/admin/mentors/:id/verify
+// @access  Private/Admin
+exports.verifyMentor = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield User_1.default.findById(req.params.id);
+    if (user && user.role === 'mentor') {
+        user.isVerified = !user.isVerified; // Toggle verification
+        yield user.save();
+        res.json({ message: `Mentor ${user.isVerified ? 'verified' : 'unverified'}`, isVerified: user.isVerified });
+    }
+    else {
+        res.status(404);
+        throw new Error('Mentor not found');
+    }
 }));

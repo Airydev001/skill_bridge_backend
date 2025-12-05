@@ -72,3 +72,19 @@ export const updateReportStatus = asyncHandler(async (req: Request, res: Respons
     await report.save();
     res.json(report);
 });
+
+// @desc    Verify a mentor
+// @route   PUT /api/admin/mentors/:id/verify
+// @access  Private/Admin
+export const verifyMentor = asyncHandler(async (req: Request, res: Response) => {
+    const user = await User.findById(req.params.id);
+
+    if (user && user.role === 'mentor') {
+        user.isVerified = !user.isVerified; // Toggle verification
+        await user.save();
+        res.json({ message: `Mentor ${user.isVerified ? 'verified' : 'unverified'}`, isVerified: user.isVerified });
+    } else {
+        res.status(404);
+        throw new Error('Mentor not found');
+    }
+});

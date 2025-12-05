@@ -1,19 +1,10 @@
 import express from 'express';
-import { getAdminStats, getAllUsers, getReports, updateReportStatus } from '../controllers/adminController';
-import { protect } from '../middleware/authMiddleware';
+import { getAdminStats, getAllUsers, getReports, updateReportStatus, verifyMentor } from '../controllers/adminController';
+import { protect, admin } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Middleware to check for admin role
-const admin = (req: any, res: any, next: any) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        res.status(401);
-        throw new Error('Not authorized as an admin');
-    }
-};
-
+// All routes here are protected and require admin role
 router.use(protect);
 router.use(admin);
 
@@ -21,5 +12,6 @@ router.get('/stats', getAdminStats);
 router.get('/users', getAllUsers);
 router.get('/reports', getReports);
 router.patch('/reports/:id', updateReportStatus);
+router.put('/mentors/:id/verify', verifyMentor);
 
 export default router;

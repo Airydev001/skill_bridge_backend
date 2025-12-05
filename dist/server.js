@@ -28,6 +28,8 @@ app.get('/health', (req, res) => {
 });
 const learningPathRoutes_1 = __importDefault(require("./routes/learningPathRoutes"));
 const challengeRoutes_1 = __importDefault(require("./routes/challengeRoutes"));
+const matchRoutes_1 = __importDefault(require("./routes/matchRoutes"));
+const reportRoutes_1 = __importDefault(require("./routes/reportRoutes"));
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/users', userRoutes_1.default);
 app.use('/api/mentors', mentorRoutes_1.default);
@@ -35,6 +37,8 @@ app.use('/api/sessions', sessionRoutes_1.default);
 app.use('/api/admin', adminRoutes_1.default);
 app.use('/api/learning-paths', learningPathRoutes_1.default);
 app.use('/api/challenges', challengeRoutes_1.default);
+app.use('/api/matches', matchRoutes_1.default);
+app.use('/api/reports', reportRoutes_1.default);
 // Serve frontend static files
 const path_1 = __importDefault(require("path"));
 const frontendPath = path_1.default.join(__dirname, '../../frontend/dist');

@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { sendSessionReminder } from '../services/emailService';
 import { checkAndAwardBadges } from '../services/gamificationService';
 import User from '../models/User';
-import { generateSessionSummary, updateLearningPathProgress } from '../services/aiService';
+import { generateSessionSummary, updateLearningPathProgress, moderateContent } from '../services/aiService';
 import LearningPath from '../models/LearningPath';
 
 // @desc    Create new session
@@ -14,6 +14,15 @@ import LearningPath from '../models/LearningPath';
 // @access  Private
 export const createSession = asyncHandler(async (req: Request, res: Response) => {
     const { mentorId, startAt, agenda } = req.body;
+
+    // AI Content Moderation for Agenda
+    if (agenda) {
+        const moderationResult = await moderateContent(agenda);
+        if (moderationResult && moderationResult.flagged) {
+            res.status(400);
+            throw new Error(`Session creation rejected: Agenda contains inappropriate content (${moderationResult.reason})`);
+        }
+    }
 
     const start = new Date(startAt);
     const end = new Date(start.getTime() + 20 * 60000); // 20 minutes
@@ -104,6 +113,15 @@ export const updateSession = asyncHandler(async (req: Request, res: Response) =>
     if (session.mentorId.toString() !== req.user._id.toString() && session.menteeId.toString() !== req.user._id.toString()) {
         res.status(401);
         throw new Error('Not authorized');
+    }
+
+    // AI Content Moderation for Notes
+    if (req.body.notes) {
+        const moderationResult = await moderateContent(req.body.notes);
+        if (moderationResult && moderationResult.flagged) {
+            res.status(400);
+            throw new Error(`Session update rejected: Notes contain inappropriate content (${moderationResult.reason})`);
+        }
     }
 
     const oldStatus = session.status;

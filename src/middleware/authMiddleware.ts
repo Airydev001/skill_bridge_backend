@@ -38,3 +38,12 @@ export const protect = asyncHandler(async (req: Request, res: Response, next: Ne
         throw new Error('Not authorized, no token');
     }
 });
+
+export const admin = (req: Request, res: Response, next: NextFunction) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(401);
+        throw new Error('Not authorized as an admin');
+    }
+};

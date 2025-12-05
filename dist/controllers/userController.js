@@ -44,6 +44,8 @@ exports.getUserProfile = (0, express_async_handler_1.default)((req, res) => __aw
         throw new Error('User not found');
     }
 }));
+const aiService_1 = require("../services/aiService");
+// ... (imports)
 // @desc    Create/Update Mentor Profile
 // @route   POST /api/users/mentor-profile
 // @access  Private
@@ -54,6 +56,17 @@ exports.updateMentorProfile = (0, express_async_handler_1.default)((req, res) =>
         res.status(400);
         throw new Error('User not authorized as mentor');
     }
+    // AI Content Moderation
+    if (bio) {
+        const moderationResult = yield (0, aiService_1.moderateContent)(bio);
+        if (moderationResult && moderationResult.flagged) {
+            res.status(400);
+            throw new Error(`Profile update rejected: ${moderationResult.reason}`);
+        }
+    }
+    // Generate embedding text
+    const embeddingText = `Bio: ${bio}. Skills: ${skills.join(', ')}. Experience: ${yearsExperience} years. Languages: ${languages.join(', ')}.`;
+    const embedding = yield (0, aiService_1.generateEmbedding)(embeddingText);
     let profile = yield MentorProfile_1.default.findOne({ userId: req.user._id });
     if (profile) {
         profile.bio = bio || profile.bio;
@@ -61,6 +74,8 @@ exports.updateMentorProfile = (0, express_async_handler_1.default)((req, res) =>
         profile.yearsExperience = yearsExperience || profile.yearsExperience;
         profile.languages = languages || profile.languages;
         profile.availability = availability || profile.availability;
+        if (embedding)
+            profile.embedding = embedding;
         yield profile.save();
     }
     else {
@@ -70,7 +85,8 @@ exports.updateMentorProfile = (0, express_async_handler_1.default)((req, res) =>
             skills,
             yearsExperience,
             languages,
-            availability
+            availability,
+            embedding: embedding || []
         });
         user.profile = profile._id;
         yield user.save();
@@ -87,12 +103,24 @@ exports.updateMenteeProfile = (0, express_async_handler_1.default)((req, res) =>
         res.status(400);
         throw new Error('User not authorized as mentee');
     }
+    // AI Content Moderation
+    const contentToCheck = `${interests.join(' ')} ${learningGoals.join(' ')}`;
+    const moderationResult = yield (0, aiService_1.moderateContent)(contentToCheck);
+    if (moderationResult && moderationResult.flagged) {
+        res.status(400);
+        throw new Error(`Profile update rejected: ${moderationResult.reason}`);
+    }
+    // Generate embedding text
+    const embeddingText = `Interests: ${interests.join(', ')}. Skill Level: ${skillLevel}. Goals: ${learningGoals.join(', ')}.`;
+    const embedding = yield (0, aiService_1.generateEmbedding)(embeddingText);
     let profile = yield MenteeProfile_1.default.findOne({ userId: req.user._id });
     if (profile) {
         profile.interests = interests || profile.interests;
         profile.skillLevel = skillLevel || profile.skillLevel;
         profile.learningGoals = learningGoals || profile.learningGoals;
         profile.preferredTimes = preferredTimes || profile.preferredTimes;
+        if (embedding)
+            profile.embedding = embedding;
         yield profile.save();
     }
     else {
@@ -101,7 +129,8 @@ exports.updateMenteeProfile = (0, express_async_handler_1.default)((req, res) =>
             interests,
             skillLevel,
             learningGoals,
-            preferredTimes
+            preferredTimes,
+            embedding: embedding || []
         });
         user.profile = profile._id;
         yield user.save();

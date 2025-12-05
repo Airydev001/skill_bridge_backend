@@ -26,6 +26,14 @@ const LearningPath_1 = __importDefault(require("../models/LearningPath"));
 // @access  Private
 exports.createSession = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { mentorId, startAt, agenda } = req.body;
+    // AI Content Moderation for Agenda
+    if (agenda) {
+        const moderationResult = yield (0, aiService_1.moderateContent)(agenda);
+        if (moderationResult && moderationResult.flagged) {
+            res.status(400);
+            throw new Error(`Session creation rejected: Agenda contains inappropriate content (${moderationResult.reason})`);
+        }
+    }
     const start = new Date(startAt);
     const end = new Date(start.getTime() + 20 * 60000); // 20 minutes
     const session = yield Session_1.default.create({
@@ -102,6 +110,14 @@ exports.updateSession = (0, express_async_handler_1.default)((req, res) => __awa
     if (session.mentorId.toString() !== req.user._id.toString() && session.menteeId.toString() !== req.user._id.toString()) {
         res.status(401);
         throw new Error('Not authorized');
+    }
+    // AI Content Moderation for Notes
+    if (req.body.notes) {
+        const moderationResult = yield (0, aiService_1.moderateContent)(req.body.notes);
+        if (moderationResult && moderationResult.flagged) {
+            res.status(400);
+            throw new Error(`Session update rejected: Notes contain inappropriate content (${moderationResult.reason})`);
+        }
     }
     const oldStatus = session.status;
     session.status = req.body.status || session.status;

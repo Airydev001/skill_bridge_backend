@@ -50,7 +50,8 @@ const mentorProfileSchema = new mongoose_1.Schema({
     metrics: {
         menteesHelped: { type: Number, default: 0 },
         hoursDonated: { type: Number, default: 0 }
-    }
+    },
+    embedding: { type: [Number], index: true }
 }, {
     timestamps: true
 });
