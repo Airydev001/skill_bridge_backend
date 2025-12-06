@@ -157,23 +157,66 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
         if (user.role === 'mentor') {
             const { bio, skills, yearsExperience, languages, availability } = req.body;
             let profile = await MentorProfile.findOne({ userId: user._id });
+
+            // Create profile if it doesn't exist
+            if (!profile) {
+                profile = await MentorProfile.create({
+                    userId: user._id,
+                    bio: bio || '',
+                    skills: skills || [],
+                    yearsExperience: yearsExperience || 0,
+                    languages: languages || [],
+                    availability: availability || '',
+                    embedding: []
+                });
+            }
+
             if (profile) {
                 if (bio) profile.bio = bio;
                 if (skills) profile.skills = skills;
                 if (yearsExperience) profile.yearsExperience = yearsExperience;
                 if (languages) profile.languages = languages;
                 if (availability) profile.availability = availability;
+
+                // Regenerate embedding if relevant fields are updated
+                if (bio || skills || yearsExperience || languages) {
+                    const embeddingText = `Bio: ${profile.bio}. Skills: ${profile.skills.join(', ')}. Experience: ${profile.yearsExperience} years. Languages: ${profile.languages.join(', ')}.`;
+                    const embedding = await generateEmbedding(embeddingText);
+                    if (embedding) profile.embedding = embedding;
+                }
+
                 await profile.save();
                 profileData = profile;
             }
         } else if (user.role === 'mentee') {
             const { interests, skillLevel, learningGoals, preferredTimes } = req.body;
             let profile = await MenteeProfile.findOne({ userId: user._id });
+
+            // Create profile if it doesn't exist
+            if (!profile) {
+                profile = await MenteeProfile.create({
+                    userId: user._id,
+                    interests: interests || [],
+                    skillLevel: skillLevel || '',
+                    learningGoals: learningGoals || [],
+                    preferredTimes: preferredTimes || '',
+                    embedding: []
+                });
+            }
+
             if (profile) {
                 if (interests) profile.interests = interests;
                 if (skillLevel) profile.skillLevel = skillLevel;
                 if (learningGoals) profile.learningGoals = learningGoals;
                 if (preferredTimes) profile.preferredTimes = preferredTimes;
+
+                // Regenerate embedding if relevant fields are updated
+                if (interests || skillLevel || learningGoals) {
+                    const embeddingText = `Interests: ${profile.interests.join(', ')}. Skill Level: ${profile.skillLevel}. Goals: ${profile.learningGoals.join(', ')}.`;
+                    const embedding = await generateEmbedding(embeddingText);
+                    if (embedding) profile.embedding = embedding;
+                }
+
                 await profile.save();
                 profileData = profile;
             }
