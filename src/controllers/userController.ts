@@ -205,7 +205,13 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
             }
 
             if (profile) {
-                if (interests) profile.interests = interests;
+                console.log('Updating mentee profile. Body:', JSON.stringify(req.body, null, 2));
+                console.log('Current profile interests:', profile.interests);
+
+                if (interests) {
+                    console.log('Updating interests to:', interests);
+                    profile.interests = interests;
+                }
                 if (skillLevel) profile.skillLevel = skillLevel;
                 if (learningGoals) profile.learningGoals = learningGoals;
                 if (preferredTimes) profile.preferredTimes = preferredTimes;
@@ -218,6 +224,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
                 }
 
                 await profile.save();
+                console.log('Profile saved. New interests:', profile.interests);
                 profileData = profile;
             }
         }

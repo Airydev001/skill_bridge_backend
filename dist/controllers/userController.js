@@ -203,8 +203,12 @@ exports.updateProfile = (0, express_async_handler_1.default)((req, res) => __awa
                 });
             }
             if (profile) {
-                if (interests)
+                console.log('Updating mentee profile. Body:', JSON.stringify(req.body, null, 2));
+                console.log('Current profile interests:', profile.interests);
+                if (interests) {
+                    console.log('Updating interests to:', interests);
                     profile.interests = interests;
+                }
                 if (skillLevel)
                     profile.skillLevel = skillLevel;
                 if (learningGoals)
@@ -219,6 +223,7 @@ exports.updateProfile = (0, express_async_handler_1.default)((req, res) => __awa
                         profile.embedding = embedding;
                 }
                 yield profile.save();
+                console.log('Profile saved. New interests:', profile.interests);
                 profileData = profile;
             }
         }
