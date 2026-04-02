@@ -43,15 +43,16 @@ export const generateSessionSummary = async (session: ISession): Promise<string 
     }
 };
 
-export const generateLearningPath = async (field: string): Promise<any | null> => {
+export const generateLearningPath = async (field: string, months = 3): Promise<any | null> => {
     try {
         if (!process.env.GEMINI_API_KEY) return null;
 
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
 
+        const weeks = Math.max(1, Math.floor(months) * 4);
         const prompt = `
-            Generate a comprehensive 12-week (3-month) learning path for a student interested in "${field}".
-            Return ONLY a valid JSON object with the following structure. The "weeklyPlan" array MUST contain exactly 12 objects (week 1 through week 12):
+            Generate a comprehensive ${weeks}-week (${months}-month) learning path for a student interested in "${field}".
+            Return ONLY a valid JSON object with the following structure. The "weeklyPlan" array MUST contain exactly ${weeks} objects (week 1 through week ${weeks}):
             {
                 "weeklyPlan": [
                     { "weekNumber": 1, "topic": "...", "tasks": [{ "id": "w1t1", "title": "...", "description": "...", "isCompleted": false }] }
@@ -73,11 +74,11 @@ export const generateLearningPath = async (field: string): Promise<any | null> =
         console.log("Generated learning path JSON:", text);
         let parsed: any = JSON.parse(text);
 
-        // Ensure we have exactly 12 weeks. If the model returned fewer weeks,
+        // Ensure we have exactly `weeks`. If the model returned fewer weeks,
         // programmatically extend the plan by copying the last available week
         // and adjusting week numbers and task IDs. This guarantees 3-month output
         // even if the model under-generates.
-        const TARGET_WEEKS = 12;
+        const TARGET_WEEKS = weeks;
         if (!parsed.weeklyPlan || parsed.weeklyPlan.length === 0) {
             parsed.weeklyPlan = [];
         }

@@ -17,15 +17,17 @@ const LearningPath_1 = __importDefault(require("../models/LearningPath"));
 const aiService_1 = require("../services/aiService");
 const createPath = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { field } = req.body;
+        const { field, months } = req.body;
         const userId = req.user._id;
         // Check if path already exists for this field
         const existingPath = yield LearningPath_1.default.findOne({ menteeId: userId, field });
         if (existingPath) {
             return res.status(200).json(existingPath);
         }
-        // Generate new path via AI
-        const generatedPathData = yield (0, aiService_1.generateLearningPath)(field);
+        // Generate new path via AI (months default to 3 if not provided)
+        const monthsInt = typeof months === 'number' && months > 0 ? months : 3;
+        // pass months through to runtime ai service
+        const generatedPathData = yield (0, aiService_1.generateLearningPath)(field, monthsInt);
         if (!generatedPathData) {
             return res.status(500).json({ message: 'Failed to generate learning path' });
         }

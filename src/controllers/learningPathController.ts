@@ -4,7 +4,7 @@ import { generateLearningPath, generateTopicResources } from '../services/aiServ
 
 export const createPath = async (req: Request, res: Response) => {
     try {
-        const { field } = req.body;
+        const { field, months } = req.body;
         const userId = (req as any).user._id;
 
         // Check if path already exists for this field
@@ -13,8 +13,9 @@ export const createPath = async (req: Request, res: Response) => {
             return res.status(200).json(existingPath);
         }
 
-        // Generate new path via AI
-        const generatedPathData = await generateLearningPath(field);
+        // Generate new path via AI (months default to 3 if not provided)
+        const monthsInt = typeof months === 'number' && months > 0 ? months : 3;
+        const generatedPathData = await generateLearningPath(field, monthsInt);
         if (!generatedPathData) {
             return res.status(500).json({ message: 'Failed to generate learning path' });
         }

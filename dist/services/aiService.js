@@ -48,14 +48,16 @@ const generateSessionSummary = (session) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.generateSessionSummary = generateSessionSummary;
-const generateLearningPath = (field) => __awaiter(void 0, void 0, void 0, function* () {
+const generateLearningPath = (field, months) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!process.env.GEMINI_API_KEY)
             return null;
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        const monthsSafe = typeof months === 'number' && months > 0 ? Math.floor(months) : 3;
+        const weeks = Math.max(1, monthsSafe * 4);
         const prompt = `
-            Generate a comprehensive 12-week (3-month) learning path for a student interested in "${field}".
-            Return ONLY a valid JSON object with the following structure. The "weeklyPlan" array MUST contain exactly 12 objects (week 1 through week 12):
+            Generate a comprehensive ${weeks}-week (${monthsSafe}-month) learning path for a student interested in "${field}".
+            Return ONLY a valid JSON object with the following structure. The "weeklyPlan" array MUST contain exactly ${weeks} objects (week 1 through week ${weeks}):
             {
                 "weeklyPlan": [
                     { "weekNumber": 1, "topic": "...", "tasks": [{ "id": "w1t1", "title": "...", "description": "...", "isCompleted": false }] }
@@ -74,11 +76,11 @@ const generateLearningPath = (field) => __awaiter(void 0, void 0, void 0, functi
         const response = yield result.response;
         const text = cleanJSON(response.text());
         var parsed = JSON.parse(text);
-        // Ensure we have exactly 12 weeks. If the model returned fewer weeks,
+        // Ensure we have exactly `weeks`. If the model returned fewer weeks,
         // programmatically extend the plan by copying the last available week
-        // and adjusting week numbers and task IDs. This guarantees 3-month output
-        // even if the model under-generates.
-        var TARGET_WEEKS = 12;
+        // and adjusting week numbers and task IDs. This guarantees the requested
+        // months->weeks output even if the model under-generates.
+        var TARGET_WEEKS = weeks;
         if (!parsed.weeklyPlan || parsed.weeklyPlan.length === 0) {
             parsed.weeklyPlan = [];
         }
