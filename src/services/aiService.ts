@@ -51,7 +51,7 @@ export const generateLearningPath = async (field: string): Promise<any | null> =
 
         const prompt = `
             Generate a comprehensive 12-week (3-month) learning path for a student interested in "${field}".
-            Return ONLY a valid JSON object with the following structure:
+            Return ONLY a valid JSON object with the following structure. The "weeklyPlan" array MUST contain exactly 12 objects (week 1 through week 12):
             {
                 "weeklyPlan": [
                     { "weekNumber": 1, "topic": "...", "tasks": [{ "id": "w1t1", "title": "...", "description": "...", "isCompleted": false }] }
@@ -71,7 +71,45 @@ export const generateLearningPath = async (field: string): Promise<any | null> =
         const response = await result.response;
         const text = cleanJSON(response.text());
         console.log("Generated learning path JSON:", text);
-        return JSON.parse(text);
+        let parsed: any = JSON.parse(text);
+
+        // Ensure we have exactly 12 weeks. If the model returned fewer weeks,
+        // programmatically extend the plan by copying the last available week
+        // and adjusting week numbers and task IDs. This guarantees 3-month output
+        // even if the model under-generates.
+        const TARGET_WEEKS = 12;
+        if (!parsed.weeklyPlan || parsed.weeklyPlan.length === 0) {
+            parsed.weeklyPlan = [];
+        }
+
+        if (parsed.weeklyPlan.length < TARGET_WEEKS) {
+            const existing = parsed.weeklyPlan;
+            const last = existing[existing.length - 1] || { topic: `${field} - Continued`, tasks: [{ id: `w1t1`, title: 'Continue learning', description: 'Self-study and practice', isCompleted: false }], weekNumber: existing.length || 0 };
+            for (let i = existing.length; i < TARGET_WEEKS; i++) {
+                const newWeekNumber = i + 1;
+                // deep copy last
+                const copy = JSON.parse(JSON.stringify(last));
+                copy.weekNumber = newWeekNumber;
+                // update task ids and reset completion
+                if (Array.isArray(copy.tasks)) {
+                    copy.tasks = copy.tasks.map((t: any, idx: number) => ({ ...t, id: `w${newWeekNumber}t${idx + 1}`, isCompleted: false }));
+                } else {
+                    copy.tasks = [{ id: `w${newWeekNumber}t1`, title: copy.topic ? `Continue ${copy.topic}` : 'Practice and review', description: 'Practice exercises and review', isCompleted: false }];
+                }
+                existing.push(copy);
+            }
+            parsed.weeklyPlan = existing;
+            console.warn(`AI returned ${existing.length} weeks; expanded to ${TARGET_WEEKS} weeks.`);
+        }
+
+        // Normalize projects' deadlines to be roughly 3 months from now if missing or obviously far
+        if (Array.isArray(parsed.projects)) {
+            const threeMonthsFromNow = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+            const iso = threeMonthsFromNow.toISOString();
+            parsed.projects = parsed.projects.map((p: any) => ({ ...p, deadline: p.deadline ? p.deadline : iso }));
+        }
+
+        return parsed;
     } catch (error: any) {
         console.error('Error generating learning path:', error);
         return null;
