@@ -54,8 +54,8 @@ const generateLearningPath = (field) => __awaiter(void 0, void 0, void 0, functi
             return null;
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
         const prompt = `
-            Generate a comprehensive 4-week learning path for a student interested in "${field}".
-            Return ONLY a valid JSON object with the following structure:
+            Generate a comprehensive 12-week (3-month) learning path for a student interested in "${field}".
+            Return ONLY a valid JSON object with the following structure. The "weeklyPlan" array MUST contain exactly 12 objects (week 1 through week 12):
             {
                 "weeklyPlan": [
                     { "weekNumber": 1, "topic": "...", "tasks": [{ "id": "w1t1", "title": "...", "description": "...", "isCompleted": false }] }
@@ -68,12 +68,44 @@ const generateLearningPath = (field) => __awaiter(void 0, void 0, void 0, functi
                     { "id": "p1", "title": "...", "description": "...", "deadline": "2024-12-31", "isCompleted": false }
                 ]
             }
-            Ensure the "deadline" for projects is roughly 1 month from now.
+            Ensure the "deadline" for projects is roughly 3 months from now.
         `;
         const result = yield model.generateContent(prompt);
         const response = yield result.response;
         const text = cleanJSON(response.text());
-        return JSON.parse(text);
+        var parsed = JSON.parse(text);
+        // Ensure we have exactly 12 weeks. If the model returned fewer weeks,
+        // programmatically extend the plan by copying the last available week
+        // and adjusting week numbers and task IDs. This guarantees 3-month output
+        // even if the model under-generates.
+        var TARGET_WEEKS = 12;
+        if (!parsed.weeklyPlan || parsed.weeklyPlan.length === 0) {
+            parsed.weeklyPlan = [];
+        }
+        if (parsed.weeklyPlan.length < TARGET_WEEKS) {
+            var existing = parsed.weeklyPlan;
+            var last = existing[existing.length - 1] || { topic: "" + field + " - Continued", tasks: [{ id: "w1t1", title: 'Continue learning', description: 'Self-study and practice', isCompleted: false }], weekNumber: existing.length || 0 };
+            for (var i = existing.length; i < TARGET_WEEKS; i++) {
+                var newWeekNumber = i + 1;
+                var copy = JSON.parse(JSON.stringify(last));
+                copy.weekNumber = newWeekNumber;
+                if (Array.isArray(copy.tasks)) {
+                    copy.tasks = copy.tasks.map(function (t, idx) { return Object.assign(Object.assign({}, t), { id: "w" + newWeekNumber + "t" + (idx + 1), isCompleted: false }); });
+                }
+                else {
+                    copy.tasks = [{ id: "w" + newWeekNumber + "t1", title: copy.topic ? "Continue " + copy.topic : 'Practice and review', description: 'Practice exercises and review', isCompleted: false }];
+                }
+                existing.push(copy);
+            }
+            parsed.weeklyPlan = existing;
+            console.warn("AI returned " + existing.length + " weeks; expanded to " + TARGET_WEEKS + " weeks.");
+        }
+        if (Array.isArray(parsed.projects)) {
+            var threeMonthsFromNow = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+            var iso = threeMonthsFromNow.toISOString();
+            parsed.projects = parsed.projects.map(function (p) { return Object.assign(Object.assign({}, p), { deadline: p.deadline ? p.deadline : iso }); });
+        }
+        return parsed;
     }
     catch (error) {
         console.error('Error generating learning path:', error);
