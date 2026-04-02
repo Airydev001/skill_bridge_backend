@@ -64,7 +64,7 @@ export const generateLearningPath = async (field: string): Promise<any | null> =
                     { "id": "p1", "title": "...", "description": "...", "deadline": "2024-12-31", "isCompleted": false }
                 ]
             }
-            Ensure the "deadline" for projects is roughly 1 month from now.
+            Ensure the "deadline" for projects is roughly 5  month from now.
         `;
 
         const result = await model.generateContent(prompt);
