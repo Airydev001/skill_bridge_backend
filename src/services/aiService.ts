@@ -70,6 +70,7 @@ export const generateLearningPath = async (field: string): Promise<any | null> =
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = cleanJSON(response.text());
+        console.log("Generated learning path JSON:", text);
         return JSON.parse(text);
     } catch (error: any) {
         console.error('Error generating learning path:', error);
