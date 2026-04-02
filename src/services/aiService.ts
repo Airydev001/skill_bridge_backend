@@ -50,7 +50,7 @@ export const generateLearningPath = async (field: string): Promise<any | null> =
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
 
         const prompt = `
-            Generate a comprehensive 20-week learning path for a student interested in "${field}".
+            Generate a comprehensive 12-week (3-month) learning path for a student interested in "${field}".
             Return ONLY a valid JSON object with the following structure:
             {
                 "weeklyPlan": [
@@ -64,7 +64,7 @@ export const generateLearningPath = async (field: string): Promise<any | null> =
                     { "id": "p1", "title": "...", "description": "...", "deadline": "2024-12-31", "isCompleted": false }
                 ]
             }
-            Ensure the "deadline" for projects is roughly 5  month from now.
+            Ensure the "deadline" for projects is roughly 3 months from now.
         `;
 
         const result = await model.generateContent(prompt);
